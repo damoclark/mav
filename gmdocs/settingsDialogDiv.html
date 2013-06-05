@@ -1,0 +1,73 @@
+<div id="MAVsettingsDiv" title="Moodle Activity Viewer Settings" style="display:none">
+	<form id="MAVsettingsForm" name="settingsFormForm">
+		<h2 id="MAVHeadingType">Activity Type</h2>
+		<div>
+			<p>Scale link activity by:</p>
+            <p id="MAVTypes">
+                <input type="radio" id="MAVTypeClicks" checked name="MAVType" value="C" /><label for="MAVTypeClicks">Clicks</label>
+                <input type="radio" id="MAVTypeColour" name="MAVType" value="S" /><label for="MAVTypeColour">Students</label>
+            </p>
+			<fieldset id="MAVTypeExample">
+				<legend>For Example:</legend>
+				<p class="MAVTypeExample">Discussion forum</p>
+			</fieldset>
+		</div>
+		<h2 id="MAVHeadingTimeframe">Timeframe</h2>
+		<div>
+			<p>Please select activity from the following weeks of term:</p>
+			<p class="columns" id="MAVTimeframeData">
+                <input type="checkbox" class="MAVTimeframe" id="week1" value="1"/> Week 1 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week2" value="2"/> Week 2 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week3" value="3"/> Week 3 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week4" value="4"/> Week 4 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week5" value="5"/> Week 5 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week6" value="6"/> Week 6 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week7" value="7"/> Week 7 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week8" value="8"/> Week 8 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week9" value="9"/> Week 9 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week10" value="10"/> Week 10 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week11" value="11"/> Week 11 <br />
+                <input type="checkbox" class="MAVTimeframe" id="week12" value="12"/> Week 12 <br />
+            </p>
+			<p><input type="button" id="timeframe_selectall" value="Select All Weeks"/>&nbsp;&nbsp;<input type="button" id="timeframe_selectnone" value="Select No Weeks"/></p>
+		</div>
+		<h2 id="MAVHeadingGroups">Student Groups</h2>
+		<div>
+			<p>Please select activity from the follow student groups:</p>
+			<p id="MAVGroupData" class="columns"></p>
+		</div>
+        <h2 id="MAVHeadingDisplaymode">Display Mode</h2>
+        <div>
+        	<p>Please select a display mode:</p>
+            <p id="MAVdisplayModes">
+            	<input type="radio" id="MAVdisplayTextSize" checked name="MAVdisplayMode" value="T" /><label for="MAVdisplayTextSize">Text Size</label>
+            	<input type="radio" id="MAVdisplayColour" name="MAVdisplayMode" value="C" /><label for="MAVdisplayColour">Heat Map</label>
+            </p>
+			<fieldset id="MAVdisplayExample">
+				<legend>For Example:</legend>
+				<p style="display:none;" id="MAVdisplayColourLegend">
+                	Colour scale: 
+                    <span class="mavColour0 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour1 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour2 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour3 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour4 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour5 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour6 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour7 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour8 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour9 mavColourLegend">&nbsp;</span>
+                    <span class="mavColour10 mavColourLegend">&nbsp;</span> <br /> <br />
+                    Example: <a class="mavColour0" href="#">Least</a> <a class="mavColour5" href="#">Moderate</a> <a class="mavColour10" href="#">Most</a>
+                </p>
+                <p style="display:none;" id="MAVdisplaySizeLegend">
+                	Size scale:  
+                    <span style="font-size:12px;">Least</span> 
+                    <span style="font-size:26px;">Moderate</span> 
+                    <span style="font-size:40px;">Most</span>        
+                </p>
+
+			</fieldset>
+        </div>
+	</form>
+</div>

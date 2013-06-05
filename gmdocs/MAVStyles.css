@@ -1,0 +1,97 @@
+fieldset {
+ 	padding: 10px;
+}
+
+legend {
+	padding: 0px 3px 0px 5px;
+}
+
+p.MAVTypeExample {
+
+}
+
+.columns {
+	columns: 3;
+	-webkit-columns: 3; /* Safari and Chrome */
+	-moz-columns: 3; /* Firefox */	
+}
+
+.mavColour0 {
+	background-color: #ebff9c;
+	-moz-box-shadow:0px 0px 15px #ebff9c;
+	box-shadow:0px 0px 15px #ebff9c;
+	color: black !important;
+}
+.mavColour1 {
+	background-color: #fcff9c;
+	-moz-box-shadow:0px 0px 15px #fcff9c;
+	box-shadow:0px 0px 15px #fcff9c;
+	color: black !important;
+}
+.mavColour2 {
+	background-color: #ffee9c;
+	-moz-box-shadow:0px 0px 15px #ffee9c;
+	box-shadow:0px 0px 15px #ffee9c;
+	color: black !important;
+}
+.mavColour3 {
+	background-color: #ffeb9c;
+	-moz-box-shadow:0px 0px 15px #ffeb9c;
+	box-shadow:0px 0px 15px #ffeb9c;
+	color: black !important;
+}
+.mavColour4 {
+	background-color: #ffd49c;
+	-moz-box-shadow:0px 0px 15px #ffd49c;
+	box-shadow:0px 0px 15px #ffd49c;
+	color: black !important;
+}
+.mavColour5 {
+	background-color: #ffc69c;
+	-moz-box-shadow:0px 0px 15px #ffc69c;
+	box-shadow:0px 0px 15px #ffc69c;
+	color: black !important;
+}
+.mavColour6 {
+	background-color: #ffba9c;
+	-moz-box-shadow:0px 0px 15px #ffba9c;
+	box-shadow:0px 0px 15px #ffba9c;
+	color: black !important;
+}
+.mavColour7 {
+	background-color: #ffb19c;
+	-moz-box-shadow:0px 0px 15px #ffb19c;
+	box-shadow:0px 0px 15px #ffb19c;
+	color: black !important;
+}
+.mavColour8 {
+	background-color: #ff9c9c;
+	-moz-box-shadow:0px 0px 15px #ff9c9c;
+	box-shadow:0px 0px 15px #ff9c9c;
+	color: black !important;
+}
+.mavColour9 {
+	background-color: #ff8484;
+	-moz-box-shadow:0px 0px 15px #ff8484;
+	box-shadow:0px 0px 15px #ff8484;
+	color: black !important;
+}
+.mavColour10 {
+	background-color: #ff6e6e;
+	-moz-box-shadow:0px 0px 15px #ff6e6e;
+	box-shadow:0px 0px 15px #ff6e6e;
+	color: black !important;
+}
+.mavColourLegend { padding: 0px 30px 0px 0px; margin-right: 3px;}
+
+div.ui-dialog { z-index:10000; }
+a.makealink {
+	cursor: pointer;	
+	color: #2069C8;
+}
+a.makealink:visited {
+	color: #818600 !important;
+}
+a.makealink:hover {
+	color: #c6006f !important;
+}

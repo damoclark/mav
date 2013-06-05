@@ -1,0 +1,8 @@
+[MOODLE2]
+adapter = pgsql
+host = localhost
+dbname = moodle
+port = 5432
+username = moodle
+password = ''
+
