@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.3.1
+// @version       0.3.2
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -36,7 +36,7 @@ var debug = true ;
 //Configure server paths
 ////////////////////////////////////////////////////////////////////////////////
 var mavServer = 'https://oltdev.cqu.edu.au' ;
-var mavServerHome = mavServer + '/mavdev3' ;
+var mavServerHome = mavServer + '/mav' ;
 var mavServerHtml = mavServer + '/htmllib/themelib' ;
 var mavVersion = GM_info.script.version ;
 
