@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.3.2
+// @version       0.3.3
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
