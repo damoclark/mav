@@ -13,7 +13,7 @@ include_once("mav_utils.php") ;
 include_once("OLT_Smarty.php") ;
 
 $pdoDB = new PDOdatabase() ;
-$dbh = $pdoDB->connectPDO('MOODLE2','/usr/local/www/moodleActivity/etc/database.ini') ;
+$dbh = $pdoDB->connectPDO('MOODLE2','../etc/database.ini') ;
 
 $input = json_decode($_REQUEST['json'],true) ;
 
