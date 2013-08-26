@@ -89,9 +89,10 @@ a.makealink {
 	cursor: pointer;	
 	color: #2069C8;
 }
-a.makealink:visited {
+/*a.makealink:visited {
 	color: #818600 !important;
 }
 a.makealink:hover {
 	color: #c6006f !important;
 }
+*/

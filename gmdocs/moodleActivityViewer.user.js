@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.3.16
+// @version       0.4.1
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -25,11 +25,6 @@
 if (window.top != window.self)  
 	exit ;
 
-//If there is no course home page link in the breadcrumbs, then this is not
-//a course site in moodle (probably home page)
-if(getCoursePageLink() == null)
-	exit ;
-
 ///////////////////////////////////////////////////////////////////////////////
 //Configure server paths
 ///////////////////////////////////////////////////////////////////////////////
@@ -38,19 +33,30 @@ var mavServerHome = balmi_config.getServerApi() ;
 var mavServerHtml = balmi_config.getServerHtml() ;
 var mavVersion = balmi_config.getVersion() ; //GM_info.script.version ;
 
+//Get an instance of balmi object to interact with moodle page
+var balmi = new balmi(balmi_config) ;
+
 //Turn on/off debugging
 var debug = balmi_config.getDebug() ;
 
-if (debug) {
+if (debug)
+{
 	console.log('mavServerHome='+mavServerHome) ;
 	console.log('mavServerHtml='+mavServerHtml) ;
 	console.log('mavVersion='+mavVersion) ;
 }
+
+//If there is no course home page link in the breadcrumbs, then this is not
+//a course site in moodle (probably home page)
+if(getCoursePageLink() == null)
+	exit ;
+
+
 ///////////////////////////////////////////////////////////////////////////////
 //Add jQuery and MAV CSS to page
 ///////////////////////////////////////////////////////////////////////////////
 var jQueryCSS = GM_getResourceText("jQueryCSS") ;
-balmi_addJqueryCSS(balmi_config,jQueryCSS) ;
+balmi.addCSS(jQueryCSS) ;
 
 if (debug) console.log('jquery css added') ;
 
@@ -70,7 +76,7 @@ $("body").append(settingsDialogDiv);
 ///////////////////////////////////////////////////////////////////////////////
 //Add Activity Viewer Links to page
 ///////////////////////////////////////////////////////////////////////////////
-window.addEventListener ("load", mavAddActivityViewerSwitch, false);
+window.addEventListener ("load", function() {mavAddActivityViewerSwitch(balmi)}, false);
 
 ///////////////////////////////////////////////////////////////////////////////
 //If activity viewer is turned on, then update the page
@@ -108,7 +114,7 @@ $("#MAVdisplayColour").bind("click", function() {
  */
 function mavUpdatePage()
 {
-	//If activityViewer "is_on", then load the activityViewer from oltdev and re-render page
+	//If activityViewer "is_on", then load the activityViewer from server and re-render page
 	if (GM_getValue('is_on') == true)
 		generateJSONRequest() ;
 }
@@ -119,101 +125,55 @@ function mavUpdatePage()
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-function mavAddActivityViewerSwitch()
+function mavAddActivityViewerSwitch(balmi)
 {
 	//Add the link option to turn on activityViewer
 
-	//Get the html for the link to add to the course administration block
-	var menu = mavCreateMenuElementDOM() ;
+	//The menu structure for MAV
+	var menuConfig = {
+		settings_menu:
+		[
+			{
+				text: 'Activity Viewer',
+				listeners: { click: null, mouseover: null },
+				submenu:
+				[
+					{
+						id: 'mav_activityViewerElement', //id property for the url a tag
+						text: //Toggle option
+						{
+							on:  'Turn Activity View Off',
+							off: 'Turn Activity View On'
+						},
+						toggle: isMavOn(), //Internal state of toggle - 'on' text will be displayed
+						url: '#',
+						image: 'http://moodle.cqu.edu.au/theme/image.php?theme=cqu2013&image=i%2Fnavigationitem&rev=391', //Default moodle node image
+						title: 'Toggle Activity Viewer',
+						listeners: { click: mavSwitchActivityViewer }
+					},
+					{
+						text: 'Activity Viewer Settings',
+						title: 'Activity Viewer Settings',
+						image: 'http://moodle.cqu.edu.au/theme/image.php?theme=cqu2013&image=i%2Fnavigationitem&rev=391', //Default moodle node image
+						listeners: { click: mavDisplaySettings }
+					}
+				]
+			}
+		]
+	} ;
 	
-	//Add to the course administration block
-	//Get the settingsnav div,
-	//then the first ul element,
-	//then the first li element,
-	//then the first ul element.
-	//Then append the menu HTML to what is already there
-	var menuList = document.getElementById('settingsnav').getElementsByTagName('ul')[0].getElementsByTagName('li')[0].getElementsByTagName('ul')[0] ;
-	menuList.appendChild(menu) ;
-	mavSetMenuElementText() ;
+	balmi.insertMenu(menuConfig) ;
 }
 
 /**
- * Create multi-level menu under settings block in Moodle which provides 'Toggle Activity Viewer' and 'Activity Viewer Settings' link options
- *
- * @returns {DOMElement} An li DOM element to be inserted into moodle page
+ * Function returns true if MAV is switched on, otherwise false
+ * 
+ * @returns {boolean} True if MAV is on, otherwise false
  */
-function mavCreateMenuElementDOM()
+function isMavOn()
 {
-	/*
-	Generate the following HTML to be inserted into the Settings block
-	<li class="type_unknown contains_branch" id="yui_3_4_1_1_1367112303870_1216">
-		<p class="tree_item branch" id="yui_3_4_1_1_1367112303870_1215">
-			<span tabindex="0" title="Toggle Activity Viewer" id="yui_3_4_1_1_1367112303870_1214">Activity Viewer</span>
-		</p>
-		<ul id="yui_3_4_1_1_1367112303870_1221">
-			<li class="type_setting collapsed item_with_icon" id="yui_3_4_1_1_1367112303870_1220">
-				<p class="tree_item leaf" id="yui_3_4_1_1_1367112303870_1219">
-					<a href="#" title="Toggle Activity Viewer" id="mav_activityViewerElement">
-						<img alt="moodle" class="smallicon navicon" title="moodle" src="http://moodle.cqu.edu.au/theme/image.php?theme=cqu2013&amp;image=i%2Fnavigationitem&amp;rev=391">
-							Turn Activity View On
-					</a>
-				</p>
-			</li>
-			<li class="type_setting collapsed item_with_icon" id="yui_3_4_1_1_1367112303870_1224">
-				<p class="tree_item leaf" id="yui_3_4_1_1_1367112303870_1223">
-					<a href="#" title="Activity Viewer Settings" id="yui_3_4_1_1_1367112303870_1222">
-						<img alt="moodle" class="smallicon navicon" title="moodle" src="http://moodle.cqu.edu.au/theme/image.php?theme=cqu2013&amp;image=i%2Fnavigationitem&amp;rev=391">
-							Activity Viewer Settings
-					</a>
-				</p>
-			</li>
-		</ul>
-	</li>
-	 */
-	var li = document.createElement("li") ;
-	li.setAttribute('class','type_unknown contains_branch collapsed') ;
-		var p =  document.createElement("p") ;
-		p.setAttribute('class','tree_item branch') ;
-			var span = document.createElement("span") ;
-			span.setAttribute('tabindex','0') ;
-			span.innerHTML = 'Activity Viewer' ;
-			span.setAttribute('title','Toggle Activity Viewer') ;
-		p.appendChild(span) ;
-	li.appendChild(p) ;
-	var ul = document.createElement("ul") ;
-		var li1 = document.createElement("li") ;
-		li1.setAttribute('class','type_setting collapsed item_with_icon') ; 
-			var p1 = document.createElement("p") ;
-			p1.setAttribute('class','tree_item leaf') ;
-				var a1 = document.createElement("a") ;
-				a1.setAttribute('href','#') ;
-				a1.setAttribute('title','Toggle Activity Viewer') ;
-				a1.setAttribute('id','mav_activityViewerElement') ;
-			p1.appendChild(a1) ;
-		li1.appendChild(p1) ;
-	ul.appendChild(li1) ;
-		var li2 = document.createElement("li") ;
-		li2.setAttribute('class','type_setting collapsed item_with_icon') ; 
-			var p2 = document.createElement("p") ;
-			p2.setAttribute('class','tree_item leaf') ;
-				var a2 = document.createElement("a") ;
-				a2.setAttribute('class','makealink') ;
-				a2.setAttribute('title','Activity Viewer Settings') ;
-				a2.innerHTML = '<img src="http://moodle.cqu.edu.au/theme/image.php?theme=cqu2013&amp;image=i%2Fnavigationitem&amp;rev=391" title="moodle" class="smallicon navicon" alt="moodle">Activity Viewer Settings' ;
-			p2.appendChild(a2) ;
-		li2.appendChild(p2) ;
-	ul.appendChild(li2) ;
-	
-	li.appendChild(ul) ;
-	
-	//Set event handler to click the activity viewer switch link (ie turn on/off)
-	a1.addEventListener('click',mavSwitchActivityViewer) ;
-	
-	//Set event handler to display the settings jQuery dialog if settings like clicked
-	a2.addEventListener('click',mavDisplaySettings) ;
-	
-	//Return the DOM structure to be inserted into the page
-	return li ;
+	var mav_on = GM_getValue('is_on') ;
+	return mav_on ;
 }
 
 /**
@@ -626,6 +586,8 @@ MAVsettings.prototype.getJSON = function()
 /**
  * Method for using ajax to retrieve all groups for this course and then it call
  * loadGroups method to update the dialog with the selected groups
+ *
+ * @todo This needs to be refactored into the balmi class
  */
 MAVsettings.prototype.getCourseGroups = function()
 {
@@ -743,7 +705,8 @@ function requestData(courseLink,links)
       },
 			complete: function(xhr,status)
 			{
-				console.log('status='+status) ;
+				if (debug)
+					console.log('status='+status) ;
 				//TODO: Hide the progress spinning wheel
 			}
     }

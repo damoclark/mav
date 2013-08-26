@@ -37,11 +37,11 @@ function balmi_config()
 	////////////////////////////////////////////////////////////////////////////
 	//Configure server paths
 	////////////////////////////////////////////////////////////////////////////
-	this.balmiServer = '' ;
-	this.balmiServerApi = this.balmiServer + '' ;
-	this.balmiServerHtml = this.balmiServer + '' ;
-	this.version = GM_info.script.version ;
-	this.debug = true ;
+	var balmiServer = '' ;
+	var balmiServerApi = balmiServer + '' ;
+	var balmiServerHtml = balmiServer + '' ;
+	var version = GM_info.script.version ;
+	var debug = true ;
 	
 	/**
 	 * Get the absolute root path URI to the balmi server for all GM script related requests
@@ -50,7 +50,7 @@ function balmi_config()
 	 */
 	this.getServer = function()
 	{
-		return this.balmiServer ;
+		return balmiServer ;
 	} ;
 	
 	/**
@@ -60,7 +60,7 @@ function balmi_config()
 	 */
 	this.getServerApi = function()
 	{
-		return this.balmiServerApi ;
+		return balmiServerApi ;
 	} ;
 	
 	/**
@@ -73,17 +73,17 @@ function balmi_config()
 	 */
 	this.getServerHtml = function()
 	{
-		return this.balmiServerHtml ;
+		return balmiServerHtml ;
 	} ;
 	
 	this.getVersion = function()
 	{
-		return this.version ;
+		return version ;
 	} ;
 	
 	this.getDebug = function()
 	{
-		return this.debug ;
+		return debug ;
 	}
 }
 
