@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.4.4
+// @version       0.4.5
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -12,7 +12,6 @@
 // @require       /htmllib/themelib/jquery-1.9.1.js
 // @require       /htmllib/themelib/jquery-ui-1.10.2.custom.min.js
 // @require       GM_XHR.js
-// @require       GM_jQuery_AJAX_Busy.js
 // @require       balmi.user.js
 // @require       GM_balmi_config.js
 // @resource      jQueryCSS /htmllib/themelib/jquery-ui-1.10.2.custom.min.css
