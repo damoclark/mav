@@ -89,6 +89,18 @@ a.makealink {
 	cursor: pointer;	
 	color: #2069C8;
 }
+
+.MAVbusyAnimation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -50px;
+    margin-left: -50px;
+    z-index: 1000;
+		display: none;
+}
+
+
 /*a.makealink:visited {
 	color: #818600 !important;
 }

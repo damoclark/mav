@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.4.1
+// @version       0.4.4
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -17,9 +17,12 @@
 // @require       GM_balmi_config.js
 // @resource      jQueryCSS /htmllib/themelib/jquery-ui-1.10.2.custom.min.css
 // @resource      settingsDialogDiv settingsDialogDiv.html
+// @resource      busyAnimationDiv busyAnimation.html
 // @resource      mavCSS MAVStyles.css
 // @include       http://moodle.cqu.edu.au/*
 // ==/UserScript==
+
+
 
 //don't run on frames or iframes
 if (window.top != window.self)  
@@ -72,6 +75,41 @@ var MAVcourseSettings = new MAVsettings(getCourseId(getCoursePageLink())) ;
 var settingsDialogDiv = GM_getResourceText('settingsDialogDiv') ;
 $("body").append(settingsDialogDiv);	
 
+if (debug)
+	console.log('Just before adding busy animation div') ;
+
+///////////////////////////////////////////////////////////////////////////////
+//Adding the busy animation to the page
+///////////////////////////////////////////////////////////////////////////////
+//Add the hidden div to the page, and set the src for the image inside the div
+var busyAnimationDiv = GM_getResourceText('busyAnimationDiv') ;
+$("body").append(busyAnimationDiv) ;
+if (debug)
+	console.log('Got after inserting busyanimationdiv') ;
+
+$("#MAVbusyAnimationImage").attr('src',mavServerHome+'/'+$("#MAVbusyAnimationImage").attr('src')) ;
+if (debug)
+	console.log('Got after updating src attribute for animation image') ;
+
+//Configure div to show and hide during ajax calls
+$(document).ajaxStart
+(
+	function()
+	{
+		$("#MAVbusyAnimationImage").show();
+		//alert("Busy on") ;
+	}
+) ;
+$(document).ajaxComplete
+(
+	function()
+	{
+		$("#MAVbusyAnimationImage").hide();
+	}
+) ;
+
+if (debug)
+	console.log('Got after ajaxsetup') ;
 
 ///////////////////////////////////////////////////////////////////////////////
 //Add Activity Viewer Links to page
@@ -351,7 +389,7 @@ function MAVsettings(courseid)
 	this.defaultJSON =
 	{
 		activityType: "C", //Default to clicks
-		displayMode: "T", //Default to text size
+		displayMode: "C", //Default to colour
 		groups: [ 0 ] //Default to all students
 	} ;
 }
