@@ -8,12 +8,12 @@ $ignition = new ignition(false) ;
 //Get our database connection helper
 include_once('PDOdatabase.php') ;
 //Get our utilities
-include_once("mav_utils.php") ;
+include_once("balmi_utils.php") ;
 //Get OLT_SMarty
 include_once("OLT_Smarty.php") ;
 
-$pdoDB = new PDOdatabase() ;
-$dbh = $pdoDB->connectPDO('MOODLE2','../etc/database.ini') ;
+$pdoDB = new PDOdatabase('DBCONF') ;
+$dbh = $pdoDB->connectPDO('MOODLE2') ;
 
 $input = json_decode($_REQUEST['json'],true) ;
 

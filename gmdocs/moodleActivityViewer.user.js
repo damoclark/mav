@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.4.5
+// @version       0.4.19
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -14,6 +14,7 @@
 // @require       GM_XHR.js
 // @require       balmi.user.js
 // @require       GM_balmi_config.js
+// @require       GM_mav_config.js
 // @resource      jQueryCSS /htmllib/themelib/jquery-ui-1.10.2.custom.min.css
 // @resource      settingsDialogDiv settingsDialogDiv.html
 // @resource      busyAnimationDiv busyAnimation.html
@@ -31,26 +32,51 @@ if (window.top != window.self)
 //Configure server paths
 ///////////////////////////////////////////////////////////////////////////////
 var balmi_config = new balmi_config() ;
-var mavServerHome = balmi_config.getServerApi() ;
-var mavServerHtml = balmi_config.getServerHtml() ;
-var mavVersion = balmi_config.getVersion() ; //GM_info.script.version ;
+var mav_config = new mav_config() ;
 
-//Get an instance of balmi object to interact with moodle page
+/**
+ * @type string Absolute URI to the location of balmi API scripts
+ */
+var balmiServerHome = balmi_config.getServerApi() ;
+
+/**
+ * @type string Absolute URI to the location of jQuery & jQuery-ui theme files
+ */
+var mavJqueryHtml = mav_config.getJqueryHtml() ;
+
+/**
+ * @type string Absolute URI to supporting HTML files for MAV (such as busy animation icon)
+ */
+var mavHtml = mav_config.getHtml() ;
+
+/**
+ * @type string Get version of MAV greasemonkey script
+ */
+var mavVersion = mav_config.getVersion() ; //GM_info.script.version ;
+
+/**
+ * @type balmi An instance of balmi object to interact with moodle page and balmi API server
+ */
 var balmi = new balmi(balmi_config) ;
+
+/**
+ * @type string Get version of balmi library
+ */
+var balmiVersion = balmi.getVersion() ;
 
 //Turn on/off debugging
 var debug = balmi_config.getDebug() ;
 
 if (debug)
 {
-	console.log('mavServerHome='+mavServerHome) ;
-	console.log('mavServerHtml='+mavServerHtml) ;
+	console.log('balmiServerHome='+balmiServerHome) ;
+	console.log('mavJqueryHtml='+mavJqueryHtml) ;
 	console.log('mavVersion='+mavVersion) ;
 }
 
 //If there is no course home page link in the breadcrumbs, then this is not
 //a course site in moodle (probably home page)
-if(getCoursePageLink() == null)
+if(balmi.getCoursePageLink() == null)
 	exit ;
 
 
@@ -58,19 +84,18 @@ if(getCoursePageLink() == null)
 //Add jQuery and MAV CSS to page
 ///////////////////////////////////////////////////////////////////////////////
 var jQueryCSS = GM_getResourceText("jQueryCSS") ;
-balmi.addCSS(jQueryCSS) ;
+addCSS(jQueryCSS) ;
 
 if (debug) console.log('jquery css added') ;
 
 var mavCSS = GM_getResourceText("mavCSS") ;
 GM_addStyle(mavCSS) ;
 
-
 ///////////////////////////////////////////////////////////////////////////////
 //Adding the dialog to the page
 ///////////////////////////////////////////////////////////////////////////////
 //Get the div for the dialog
-var MAVcourseSettings = new MAVsettings(getCourseId(getCoursePageLink())) ;
+var MAVcourseSettings = new MAVsettings(balmi.getCourseId()) ;
 var settingsDialogDiv = GM_getResourceText('settingsDialogDiv') ;
 $("body").append(settingsDialogDiv);	
 
@@ -86,7 +111,7 @@ $("body").append(busyAnimationDiv) ;
 if (debug)
 	console.log('Got after inserting busyanimationdiv') ;
 
-$("#MAVbusyAnimationImage").attr('src',mavServerHome+'/'+$("#MAVbusyAnimationImage").attr('src')) ;
+$("#MAVbusyAnimationImage").attr('src',mavHtml+'/'+$("#MAVbusyAnimationImage").attr('src')) ;
 if (debug)
 	console.log('Got after updating src attribute for animation image') ;
 
@@ -183,7 +208,7 @@ function mavAddActivityViewerSwitch(balmi)
 							off: 'Turn Activity View On'
 						},
 						toggle: isMavOn(), //Internal state of toggle - 'on' text will be displayed
-						url: '#',
+						//url: '#',
 						image: 'http://moodle.cqu.edu.au/theme/image.php?theme=cqu2013&image=i%2Fnavigationitem&rev=391', //Default moodle node image
 						title: 'Toggle Activity Viewer',
 						listeners: { click: mavSwitchActivityViewer }
@@ -628,14 +653,14 @@ MAVsettings.prototype.getJSON = function()
  */
 MAVsettings.prototype.getCourseGroups = function()
 {
-	var data = JSON.stringify({ "courselink": getCoursePageLink().href }) ;
+	var data = JSON.stringify({ "courselink": balmi.getCoursePageLink().href }) ;
 
 	var settings = this ;
 	
   var xhr = $.ajax
   (
     {
-      url: mavServerHome+'/getCourseGroups.php',
+      url: balmiServerHome+'/getCourseGroups.php',
       xhr: function(){return new GM_XHR();}, //Use GM_xmlhttpRequest
       type: 'GET',
       data: { "json": data },
@@ -674,7 +699,7 @@ MAVsettings.prototype.getCourseGroups = function()
  */
 function generateJSONRequest()
 {
-	var courseLink = getCoursePageLink() ;
+	var courseLink = balmi.getCoursePageLink() ;
 	//If no course link found in breadcrumbs, then not on a course page
 	if (courseLink == null)
 		exit ;
@@ -684,8 +709,16 @@ function generateJSONRequest()
 	//Parse the page for moodle links, assemble and generate a JSONP request to get
 	//the stats
 	
-	links = getMoodleLinks() ;
+	links = balmi.getMoodleLinks() ;
 	
+	//Filter out links we don't want
+	for (var l in links)
+	{
+		//Don't count evaluation links as students clicks in evaluations aren't recorded
+		//in the m_log
+		if(links[l][0] == 'evaluation')
+			delete links[l] ;
+	}
 	requestData(courseLink,links) ;
 }
 
@@ -714,7 +747,7 @@ function requestData(courseLink,links)
 	
 	//var request = $.post
 	//(
-	//	mavServerHome+'/getActivity.php',
+	//	balmiServerHome+'/getActivity.php',
 	//	{ "json": escape(data) },
 	//	function(data)
 	//	{
@@ -726,7 +759,7 @@ function requestData(courseLink,links)
   var xhr = $.ajax
   (
     {
-      url: mavServerHome+'/getActivity.php',
+      url: balmiServerHome+'/getActivity.php',
       xhr: function(){return new GM_XHR();}, //Use GM_xmlhttpRequest
       type: 'POST',
       data: { "json": data },
@@ -754,32 +787,6 @@ function requestData(courseLink,links)
 	//http://stackoverflow.com/questions/446594/abort-ajax-requests-using-jquery
 	
 
-}
-
-function getMoodleLinks()
-{
-	var allLinks = document.getElementsByTagName("a") ;
-	
-	//alert("number of all links="+allLinks.length) ;
-	
-	
-	//Need to match only href links that start with host
-	//TODO: Need to use the window.location property to determine the hostname, rather than hardcoded
-	modre = /^(?:https?:\/\/)?moodle\.cqu\.edu\.au\/mod\/([^\/]+)\/([^\/]+)$/ ;
-	
-	var links = {} ;
-	
-	for (var i=0; i < allLinks.length; i++)
-	{
-		var info = allLinks[i].href.match(modre) ;
-		if (info != null)
-		{
-			var linkName = info.shift().replace(/^(?:https?:\/\/)?moodle\.cqu\.edu\.au\//,'\/') ;
-			links[linkName] = info ;
-		}
-	}
-	
-	return links ;
 }
 
 function updatePage(data)
@@ -874,67 +881,22 @@ function updatePage(data)
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Function to parse given url and extract as an object the query parameters
+ * Add jquery-ui css to GM sandbox using GM_addStyle and rewrite any url(paths)
+ * to be absolute according to the mav_config.getJqueryHtml() URI
+ *
+ * eg.
+ *
+ * change:
+ * url(images/ui-bg_glass_75_ccdc6a_1x400.png)
+ * to:
+ * url(https://host.cqu.edu.au/html/images/ui-bg_glass_75_ccdc6a_1x400.png)
  * 
- * @param   {String} function The url to parse
- * 
- * @returns {Object} An object with properties names as params and matching values
+ * @param   {string} jQueryCSS CSS for jquery-ui (eg. contents of jquery-ui-1.10.2.custom.css)
  */
-function parseQueryString(url)
+function addCSS(css)
 {
-	var nvpair = {};
-	var qs = url.search.replace('?', '');
-	var pairs = qs.split('&');
-	for(var i = 0; i < pairs.length; i++)
-	{
-		var pair = pairs[i].split('=') ;
-		nvpair[pair[0]] = pair[1];
-	}
-	return nvpair;
-}
-
-/**
- * Function to get the moodle DB courseid from the course page url
- * 
- * @param   {String} coursePageLink Course Home Page Link
- * 
- * @returns {Integer} The courseid or null
- */
-function getCourseId(coursePageLink)
-{
-	var link = getCoursePageLink() ;
-	if(debug) console.log('course homepage link='+link) ;
-	if(link == null)
-		return null ;
-	var params = parseQueryString(link) ;
-
-	if(debug) console.log('courseid='+params.id) ;
-
-	return params.id ;
-}
-
-/**
- * Determine the course home page from the breadcrumbs
- * 
- * @returns {string} URL to the course home page for this page's course
- */
-function getCoursePageLink()
-{
-	//xpath to the a element for the COURSE home page link in breadcrumbs
-	//https://developer.mozilla.org/en/docs/Introduction_to_using_XPath_in_JavaScript#First_Node
-	//Not portable - Gecko only
-	var courseLink = document.evaluate('/html/body/div[2]/div[2]/div/div/ul/li[3]/a',document,null,XPathResult.FIRST_ORDERED_NODE_TYPE, null) ;
-	courseLink = courseLink.singleNodeValue ;
-	
-	var courseLinkRE = /^(?:https?:\/\/)?moodle\.cqu\.edu\.au\/course\/view\.php\?id=\d+$/ ;
-	if (!courseLinkRE.test(courseLink.href))
-	{
-		courseLink = document.evaluate('/html/body/div[2]/div[2]/div/div/ul/li[4]/a',document,null,XPathResult.FIRST_ORDERED_NODE_TYPE, null) ;
-		courseLink = courseLink.singleNodeValue ;
-	}
-	if(debug)
-		console.log('coursepagelink='+courseLink) ;
-		
-	return courseLink ;
+	//Make jQuery images load from mav server
+	css = css.replace(/url\((images\/ui-[^\.]+.png)\)/gm,"url(" + mavJqueryHtml + "/$1)") ;
+	GM_addStyle(css) ;	
 }
 

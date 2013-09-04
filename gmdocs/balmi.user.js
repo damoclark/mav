@@ -28,6 +28,11 @@ function balmi(balmi_config)
 	var config = balmi_config ;
 	
 	/**
+	 * @type string Version of balmi javascript library
+	 */
+	var balmiVersion = '0.0.1' ;
+	
+	/**
 	 * @type string CSS for styling menu links in blue so look like real links
 	 */
 	var menuCSS = 'a.makealink:visited { color: #818600 !important; } a.makealink:hover {	color: #c6006f !important; }' ;
@@ -47,24 +52,120 @@ function balmi(balmi_config)
 	//////////////////////////////////////////////////////////////////////////////
 	
 	/**
-	 * Add jquery-ui css to GM sandbox using GM_addStyle and rewrite any url(paths)
-	 * to be absolute according to the balmi_config parameter's getServerHtml URI
-	 *
-	 * eg.
-	 *
-	 * change:
-	 * url(images/ui-bg_glass_75_ccdc6a_1x400.png)
-	 * to:
-	 * url(https://host.cqu.edu.au/html/images/ui-bg_glass_75_ccdc6a_1x400.png)
+	 * Returns the version of this balmi library file
 	 * 
-	 * @param   {balmi_config} function  balmi_config object for balmi script
-	 * @param   {string} jQueryCSS CSS for jquery-ui (eg. contents of jquery-ui-1.10.2.custom.css)
+	 * @param   {Type} this Description
+	 * 
+	 * @returns {string} Version string of this library
 	 */
-	this.addCSS = function(css)
+	this.getVersion = function()
 	{
-		//Make jQuery images load from mav server
-		css = css.replace(/url\((images\/ui-[^\.]+.png)\)/gm,"url(" + config.getServerHtml() + "/$1)") ;
-		GM_addStyle(css) ;	
+		return balmiVersion ;
+	}
+	
+	/**
+	 * Returns the moodle DB courseid from the course page url
+	 * 
+	 * @param   {String} coursePageLink Course Home Page Link
+	 * 
+	 * @returns {Integer} The courseid or null
+	 */
+	this.getCourseId = function()
+	{
+		var link = this.getCoursePageLink() ;
+		if(config.getDebug()) console.log('course homepage link='+link) ;
+		if(link == null)
+			return null ;
+		var params = this.parseQueryString(link) ;
+	
+		if(config.getDebug()) console.log('courseid='+params.id) ;
+	
+		return params.id ;
+	}
+
+	/**
+	 * Method to parse given url and extract as an object the query parameters
+	 * 
+	 * @param   {String} function The url to parse
+	 * 
+	 * @returns {Object} An object with properties names as params and matching values
+	 */
+	this.parseQueryString = function(url)
+	{
+		var nvpair = {};
+		var qs = url.search.replace('?', '');
+		var pairs = qs.split('&');
+		for(var i = 0; i < pairs.length; i++)
+		{
+			var pair = pairs[i].split('=') ;
+			nvpair[pair[0]] = pair[1];
+		}
+		return nvpair;
+	}
+
+	/**
+	 * Determine the course home page from the breadcrumbs
+	 * 
+	 * @returns {string} URL to the course home page for this page's course
+	 */
+	this.getCoursePageLink = function()
+	{
+		//xpath to the a element for the COURSE home page link in breadcrumbs
+		//https://developer.mozilla.org/en/docs/Introduction_to_using_XPath_in_JavaScript#First_Node
+		//Not portable - Gecko only
+		var courseLink = document.evaluate('/html/body/div[2]/div[2]/div/div/ul/li[3]/a',document,null,XPathResult.FIRST_ORDERED_NODE_TYPE, null) ;
+		courseLink = courseLink.singleNodeValue ;
+		
+		//TODO Determine the url based on current location string and then make RE
+		//from that
+		var courseLinkRE = /^(?:https?:\/\/)?moodle\.cqu\.edu\.au\/course\/view\.php\?id=\d+$/ ;
+		if (!courseLinkRE.test(courseLink.href))
+		{
+			courseLink = document.evaluate('/html/body/div[2]/div[2]/div/div/ul/li[4]/a',document,null,XPathResult.FIRST_ORDERED_NODE_TYPE, null) ;
+			courseLink = courseLink.singleNodeValue ;
+		}
+		if(config.getDebug())
+			console.log('coursepagelink='+courseLink) ;
+			
+		return courseLink ;
+	}
+
+	/**
+	 * Traverse current moodle page and retrieve all links back to Moodle in format
+	 * compatible with balmi server API getActivity.php
+	 *
+	 * data structure returned looks like an object of the form for each link
+	 * {
+	 *   "/mod/forum/view.php?id=12345": ["forum","view.php?id=12345"]
+	 *   "/mod/page/view.php?id=12345": ["page","view.php?id=12345"]
+	 * }
+	 * 
+	 * @returns {object} List of Moodle links in format compatible with getActivity.php
+	 */
+	this.getMoodleLinks = function()
+	{
+		var allLinks = document.getElementsByTagName("a") ;
+		
+		//alert("number of all links="+allLinks.length) ;
+		
+		
+		//Need to match only href links that start with host
+		//TODO: Need to use the window.location property to determine the hostname, rather than hardcoded
+		modre = /^(?:https?:\/\/)?moodle\.cqu\.edu\.au\/mod\/([^\/]+)\/([^\/]+)$/ ;
+		
+		var links = {} ;
+		
+		for (var i=0; i < allLinks.length; i++)
+		{
+			var info = allLinks[i].href.match(modre) ;
+			if (info != null)
+			{
+				var linkName = info.shift().replace(/^(?:https?:\/\/)?moodle\.cqu\.edu\.au\//,'\/') ;
+				links[linkName] = info ;
+			}
+		}
+		
+		return links ;
 	}
 
 	/**

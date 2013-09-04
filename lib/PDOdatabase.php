@@ -33,13 +33,25 @@ class PDOdatabase
 		{
 			$this->varname = $varname ;
 			$this->configPath = getenv($varname) ;
-			if(!is_file($this->configPath) or !is_readable($this->configPath))
-				throw new PDOdatabase_Exception("Config file '" . $this->configPath . "' does not exist, is not readable, or is not a file",PDOdatabase_Exception::FATAL_ERROR) ;
-			$config = parse_ini_file($this->configPath,true) ;
-			if($config === false)
-				throw new PDOdatabase_Exception("Error parsing config file '" . $this->configPath . "'",PDOdatabase_Exception::FATAL_ERROR) ;
-			$this->config = $config ;
+			$this->config = $this->parseConfig($this->configPath) ;
 		}
+	}
+	
+	protected function parseConfig($configFilename)
+	{
+		if($configFilename == null)
+			throw new PDOdatabase_Exception("No configFile specified.  Dont know where to read database parameters from",PDOdatabase_Exception::FATAL_ERROR) ;
+		
+		if(!is_file($configFilename) or !is_readable($configFilename))
+			throw new PDOdatabase_Exception("Config file '" . $configFilename . "' does not exist, is not readable, or is not a file",PDOdatabase_Exception::FATAL_ERROR) ;
+		
+		$config = parse_ini_file($configFilename,true) ;
+		
+		if($config === false)
+			throw new PDOdatabase_Exception("Error parsing config file '" . $configFilename . "'",PDOdatabase_Exception::FATAL_ERROR) ;
+
+		//Save the config data structure
+		return $config ;
 	}
 	
 	/**
@@ -54,17 +66,11 @@ class PDOdatabase
 	 */
 	public function connectPDO($database,$configFilename=null)
 	{
-		if($configFilename == null and $this->ignition == null)
-			throw new PDOdatabase_Exception("No ignition object and no configFile specified.  Dont know where to read database parameters from",PDOdatabase_Exception::FATAL_ERROR) ;
+		if($configFilename == null and $this->config == null)
+			throw new PDOdatabase_Exception("No configFile specified.  Dont know where to read database parameters from",PDOdatabase_Exception::FATAL_ERROR) ;
 		
-		if(!is_file($configFilename) or !is_readable($configFilename))
-			throw new PDOdatabase_Exception("Config file '" . $configFilename . "' does not exist, is not readable, or is not a file",PDOdatabase_Exception::FATAL_ERROR) ;
-		
-		$config = parse_ini_file($configFilename,true) ;
-		
-		if($config === false)
-			throw new PDOdatabase_Exception("Error parsing config file '" . $configFilename . "'",PDOdatabase_Exception::FATAL_ERROR) ;
-		
+		$config = (isset($configFilename)) ? $this->parseConfig($configFilename) : $this->config ;
+
 		if(!array_key_exists($database,$config))
 			throw new PDOdatabase_Exception("Database section $database does not exist in config file $configFilename",PDOdatabase_Exception::FATAL_ERROR) ;
 
