@@ -1,5 +1,5 @@
 /**
- * Creates an instance of balmi_config
+ * Creates an instance of mav_config
  *
  * Greasemonkey scripts often need to request UI elements (Html) and AJAX data
  * (Api) from an alternate source to the location of the page in which the
@@ -30,47 +30,72 @@
  *
  * @constructor
  * @author Damien Clark damo.clarky@gmail.com
- * @this {balmi_config}
+ * @this {mav_config}
  */
-function balmi_config()
+function mav_config()
 {
 	////////////////////////////////////////////////////////////////////////////
 	//Configure server paths
 	////////////////////////////////////////////////////////////////////////////
-	var balmiServer = '' ;
-	var moodleServer = '' ;
-	var balmiServerApi = balmiServer + '' ;
+	var mavServer = '' ;
+	var mavJqueryHtml = mavServer + '' ;
+	var mavHtml = mavServer + '' ;
 	var version = GM_info.script.version ;
 	var debug = true ;
 	
 	/**
-	 * Get the absolute root path URI to the balmi server for all GM script related requests
+	 * Get the absolute root path URI to the mav server for all GM script related requests
 	 * 
-	 * @returns {string} URI to the root path of balmi server (eg. https://olt.cqu.edu.au)
+	 * @returns {string} URI to the root path of mav server (eg. https://olt.cqu.edu.au)
 	 */
 	this.getServer = function()
 	{
-		return balmiServer ;
+		return mavServer ;
 	} ;
 	
 	/**
-	 * Get the absolute root path URI to the Moodle server 
+	 * Get the absolute URI to the root path of mav server static HTML related files
+	 * such as those related to jquery themes that might be included
 	 * 
-	 * @returns {string} URI to the root path of the Moodle server (eg. moodle.cqu.edu.au)
+	 * @param   {Type} this Description
+	 * 
+	 * @returns {string} URI to the root path of mav server static HTML related files (eg. https://olt.cqu.edu.au/htmllib/themelib)
 	 */
-	this.getMoodleServer = function()
+	this.getJqueryHtml = function()
 	{
-		return moodleServer ;
-	}
+		return mavJqueryHtml ;
+	} ;
 	
 	/**
-	 * Get the absolute URI to the API scripts for balmi server 
+	 * Get the absolute URI to the root path of mav server static HTML related files
+	 * such as busy animations and help links
 	 * 
-	 * @returns {string} URI to the root path of balmi server API scripts (eg. https://olt.cqu.edu.au/mav)
+	 * @returns {string} URI to the root path of mav server static HTML related files
 	 */
-	this.getServerApi = function()
+	this.getHtml = function()
 	{
-		return balmiServerApi ;
+		return mavHtml ;
+	} ;
+	
+	/**
+	 * Get the absolute URI to the root path of the jQuery library and jquery-ui
+	 * theme files
+	 * 
+	 * @returns {string} URI to the root path of the jQuery & jQuery-ui theme files
+	 */
+	this.getJqueryHtml = function()
+	{
+		return mavJqueryHtml ;
+	} ;
+	
+	/**
+	 * Get the version of MAV
+	 * 
+	 * @returns {string} Version number of MAV
+	 */
+	this.getVersion = function()
+	{
+		return version ;
 	} ;
 	
 	/**
