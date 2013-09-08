@@ -17,6 +17,21 @@ $dbh = $pdoDB->connectPDO('MOODLE2') ;
 
 $input = json_decode($_REQUEST['json'],true) ;
 
+//Log request
+$input['username'] = $_SERVER['REMOTE_USER'] ;
+$now = new DateTime() ;
+$input['timestamp'] = $now->format('U') ;
+file_put_contents
+(
+	getenv('PROJECTDIR').'/log/getActivity.txt',
+	json_encode
+	(
+		$input,
+		JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT
+	)."\n", //Append a newline
+	FILE_APPEND|LOCK_EX
+) ;
+
 $output = array() ;
 
 //Get the course id from courselink property of json data
@@ -24,12 +39,16 @@ $courseid = getCourseIdFromCourseHomePageLink($input['courselink']) ;
 
 if($courseid == null)
 {
-	error_log("No course code found") ;
+	error_log("No course code found for page ".$input['courselink']) ;
 	exit(1) ;
 }
 
-error_log("getActivity: courseid=$courseid") ;
-error_log("getActivity: settings\n".$input['settings']) ;
+if(getenv('DEBUG'))
+{
+	error_log("getActivity: courseid=$courseid") ;
+	error_log("getActivity: settings\n".$input['settings']) ;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Get Maximum number of clicks for any link on course site
 ////////////////////////////////////////////////////////////////////////////////
@@ -92,7 +111,8 @@ if($input['settings']['groups'][0] != 0) //If there are groups specified add to 
 	$query->assign('selectedGroups',$input['settings']['groups']) ;
 $select = $query->fetch('getActivityQuery.tpl') ;
 
-error_log("getActivity.php query=\n$select") ;
+if(getenv('DEBUG'))
+	error_log("getActivity.php query=\n$select") ;
 
 //Run query
 $stmt = $dbh->prepare($select) ;
@@ -104,7 +124,9 @@ foreach($input['links'] as $link => $data)
 	$stmt->execute(array(':module'=>$module,':url'=>$url,':course'=>$courseid)) ;
 	
 	$rowCount = $stmt->rowCount() ;
-	error_log("module=$module, url=$url, course=$courseid, count=$rowCount") ;
+	if(getenv('DEBUG'))
+		error_log("module=$module, url=$url, course=$courseid, count=$rowCount") ;
+
 	$output[$link] = $rowCount ;
 }
 
@@ -117,6 +139,7 @@ header('Content-Type: application/json');
 
 echo json_encode($output) ;
 
-error_log('output='.json_encode($output)) ;
+if(getenv('DEBUG'))
+	error_log('output='.json_encode($output)) ;
 
 ?>

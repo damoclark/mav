@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.4.20
+// @version       0.4.25
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -717,7 +717,29 @@ function generateJSONRequest()
 		//Don't count evaluation links as students clicks in evaluations aren't recorded
 		//in the m_log
 		if(links[l][0] == 'evaluation')
+		{
+			if (debug)
+				console.log('Excluded evaluation link '+links[l][1]) ;
 			delete links[l] ;
+		}
+		else if (links[l][1].indexOf("#") != -1) //Don't include in-doc links
+		{
+			if (debug)
+				console.log('Excluded anchor link '+links[l][1]) ;
+			delete links[l] ;
+		}
+		else if (links[l][1].indexOf("dock=") != -1) //Don't include docking icon links
+		{
+			if (debug)
+				console.log('Excluded dock link '+links[l][1]) ;
+			delete links[l] ;
+		}
+		else if (links[l][1].indexOf("edit=") != -1) //Don't include editing links
+		{
+			if (debug)
+				console.log('Excluded edit link '+links[l][1]) ;
+			delete links[l] ;
+		}
 	}
 	requestData(courseLink,links) ;
 }

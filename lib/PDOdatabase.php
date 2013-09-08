@@ -92,7 +92,8 @@ class PDOdatabase
 				continue ;
 			$connectionString .= "{$param}={$settings[$param]};" ;
 		}
-		error_log("$connectionString") ;
+		if(getenv('DEBUG'))
+			error_log("$connectionString") ;
 		return new PDO($connectionString,$settings['username'],$settings['password']) ;
 	}
 }
