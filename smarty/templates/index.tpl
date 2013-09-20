@@ -36,7 +36,7 @@
 
 {if $browser.browser == "Firefox"}
 
-	{if $browser.majorver > 19}
+	{if $browser.majorver >= 15}
 
 		<p>To install Moodle Activity Viewer, please follow the instructions below.</p>
     
