@@ -9,8 +9,6 @@ $ignition = new ignition(false) ;
 include_once('PDOdatabase.php') ;
 //Get our utilities
 include_once("balmi_utils.php") ;
-//Get OLT_SMarty
-include_once("OLT_Smarty.php") ;
 
 $pdoDB = new PDOdatabase('DBCONF') ;
 $dbh = $pdoDB->connectPDO('MOODLE2') ;
@@ -104,18 +102,28 @@ $row = $stmt->fetch(PDO::FETCH_ASSOC) ;
 if($row != null)
 	$studentCount = $row['counter'] ;
 
+////////////////////////////////////////////////////////////////////////////////
 //Get the number of clicks for given link in course
-$query = new OLT_Smarty() ;
-$query->assign('activityType',$input['settings']['activityType']) ;
+////////////////////////////////////////////////////////////////////////////////
+
+//Collate data to be inserted into the php query template
+$queryData = array() ;
+$queryData['activityType'] = $input['settings']['activityType'] ;
 if($input['settings']['groups'][0] != 0) //If there are groups specified add to query
-	$query->assign('selectedGroups',$input['settings']['groups']) ;
-$select = $query->fetch('getActivityQuery.tpl') ;
+	$queryData['selectedGroups'] = $input['settings']['groups'] ;
+
+//Use output buffering to capture the output of the php query template script
+ob_start() ;
+include('getActivityQueryTemplate.php') ;
+//The generated query is now stored in $query from the output of the included script
+$query = ob_get_contents() ;
+ob_end_clean() ;
 
 if(getenv('DEBUG'))
-	error_log("getActivity.php query=\n$select") ;
+	error_log("getActivity.php query=\n$query") ;
 
 //Run query
-$stmt = $dbh->prepare($select) ;
+$stmt = $dbh->prepare($query) ;
 
 foreach($input['links'] as $link => $data)
 {
