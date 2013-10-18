@@ -9,6 +9,7 @@ $ignition = new ignition(false) ;
 include_once('PDOdatabase.php') ;
 //Get our utilities
 include_once("balmi_utils.php") ;
+include_once('generateSQLQuery.php') ;
 
 $pdoDB = new PDOdatabase('DBCONF') ;
 $dbh = $pdoDB->connectPDO('MOODLE2') ;
@@ -112,12 +113,7 @@ $queryData['activityType'] = $input['settings']['activityType'] ;
 if($input['settings']['groups'][0] != 0) //If there are groups specified add to query
 	$queryData['selectedGroups'] = $input['settings']['groups'] ;
 
-//Use output buffering to capture the output of the php query template script
-ob_start() ;
-include('getActivityQueryTemplate.php') ;
-//The generated query is now stored in $query from the output of the included script
-$query = ob_get_contents() ;
-ob_end_clean() ;
+$query = generateSQLQuery('getActivityQueryTemplate.php',$queryData) ;
 
 if(getenv('DEBUG'))
 	error_log("getActivity.php query=\n$query") ;

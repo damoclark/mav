@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.4.25
+// @version       0.4.72
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -72,6 +72,8 @@ if (debug)
 	console.log('balmiServerHome='+balmiServerHome) ;
 	console.log('mavJqueryHtml='+mavJqueryHtml) ;
 	console.log('mavVersion='+mavVersion) ;
+	console.log('userid='+balmi.getLoggedInUserIdNumber()) ;
+	console.log('fullname='+balmi.getLoggedInUserFullname()) ;
 }
 
 //If there is no course home page link in the breadcrumbs, then this is not
@@ -141,6 +143,11 @@ if (debug)
 window.addEventListener ("load", function() {mavAddActivityViewerSwitch(balmi)}, false);
 
 ///////////////////////////////////////////////////////////////////////////////
+//Add link to SSI in the Support block within course site
+///////////////////////////////////////////////////////////////////////////////
+window.addEventListener("load", function() {mavAddSSILink(balmi)}, false) ;
+
+///////////////////////////////////////////////////////////////////////////////
 //If activity viewer is turned on, then update the page
 ///////////////////////////////////////////////////////////////////////////////
 window.addEventListener ("load", mavUpdatePage, false);
@@ -179,6 +186,24 @@ function mavUpdatePage()
 	//If activityViewer "is_on", then load the activityViewer from server and re-render page
 	if (GM_getValue('is_on') == true)
 		generateJSONRequest() ;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//Add link to SSI system for this course
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+function mavAddSSILink(balmi)
+{
+	var ssiLink = document.createElement('a') ;
+	var courseCode = balmi.getCourseCode() ;
+	ssiLink.setAttribute('href','https://oltdev.cqu.edu.au/ssi/ssiMain.php?coursecode='+courseCode) ;
+	ssiLink.setAttribute('target','_blank') ;
+	courseCodeTextNode = document.createTextNode('Student Engagement Report') ;
+	ssiLink.appendChild(courseCodeTextNode) ;
+	balmi.addToBlock('block_cqu_course_support',ssiLink) ;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -738,6 +763,18 @@ function generateJSONRequest()
 		{
 			if (debug)
 				console.log('Excluded edit link '+links[l][1]) ;
+			delete links[l] ;
+		}
+		else if (links[l][1].indexOf("subscribe") != -1) //Don't include forum subscription management links on forum pages
+		{
+			if (debug)
+				console.log('Exclude forum subscription links on forum pages') ;
+			delete links[l] ;
+		}
+		else if (links[l][1].indexOf("settracking") != -1)
+		{
+			if (debug)
+				console.log('Exclude unread post tracking links on forum pages') ;
 			delete links[l] ;
 		}
 	}

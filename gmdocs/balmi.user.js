@@ -28,6 +28,11 @@ function balmi(balmi_config)
 	var config = balmi_config ;
 	
 	/**
+	 * @type string URL for home page of current course site
+	 */
+	var coursePageLink = null ;
+	
+	/**
 	 * @type string Version of balmi javascript library
 	 */
 	var balmiVersion = '0.0.1' ;
@@ -106,30 +111,57 @@ function balmi(balmi_config)
 	/**
 	 * Determine the course home page from the breadcrumbs
 	 * 
-	 * @returns {string} URL to the course home page for this page's course
+	 * @returns {Element} Element object representing the URL to the course home page for this page's course
 	 */
 	this.getCoursePageLink = function()
 	{
-		//xpath to the a element for the COURSE home page link in breadcrumbs
-		//https://developer.mozilla.org/en/docs/Introduction_to_using_XPath_in_JavaScript#First_Node
-		//Not portable - Gecko only
-		var courseLink = document.evaluate('/html/body/div[2]/div[2]/div/div/ul/li[3]/a',document,null,XPathResult.FIRST_ORDERED_NODE_TYPE, null) ;
-		courseLink = courseLink.singleNodeValue ;
-		
-		//TODO Determine the url based on current location string and then make RE
-		//from that
-		var courseLinkRE = /^(?:https?:\/\/)?moodle\.cqu\.edu\.au\/course\/view\.php\?id=\d+$/ ;
-		if (!courseLinkRE.test(courseLink.href))
+		if (coursePageLink != null)
+			return coursePageLink ;
+
+		//Find the breadcrumbs div
+		var breadcrumbs = document.getElementsByClassName('breadcrumb')[0] ;
+		console.log('breadcrumbs='+breadcrumbs) ;
+		//and then find all the child a tags
+		var courseLink = breadcrumbs.getElementsByTagName('a') ;
+		console.log('courselink='+courseLink) ;
+		//and finally iterate over the a tags, and match the one that matches a course home page
+		//and finally get the last one (that will be)
+		for (var i=0; i < courseLink.length; i++)
 		{
-			courseLink = document.evaluate('/html/body/div[2]/div[2]/div/div/ul/li[4]/a',document,null,XPathResult.FIRST_ORDERED_NODE_TYPE, null) ;
-			courseLink = courseLink.singleNodeValue ;
+			console.log('breadcrumb link href='+courseLink.item(i).href) ;
+			if(courseLink.item(i).href.match(/\/course\/view\.php\?id=\d+$/))
+			{
+				console.log('breadcrumb link href='+courseLink.item(i).href+' matched') ;
+				courseLink = courseLink.item(i) ;
+				break ;
+			}
 		}
-		if(config.getDebug())
-			console.log('coursepagelink='+courseLink) ;
-			
+		//courseLink = courseLink.item(courseLink.length-1) ;
+		if (courseLink instanceof HTMLCollection)
+		{
+			console.log('Not on course page') ;
+			return null ;
+		}
+
+		console.log('courselink='+courseLink) ;
+		coursePageLink = courseLink ;
+		
 		return courseLink ;
 	}
 
+	/**
+	 * Get the shortname for the current Moodle course site
+	 * 
+	 * @returns {string} The shortname as a string
+	 */
+	this.getCourseCode = function()
+	{
+		var courseLink = this.getCoursePageLink() ;
+		var courseCode = courseLink.innerHTML ;
+		console.log('coursecode='+courseCode) ;
+		return courseCode ;
+	}
+	
 	/**
 	 * Traverse current moodle page and retrieve all links back to Moodle in format
 	 * compatible with balmi server API getActivity.php
@@ -166,6 +198,69 @@ function balmi(balmi_config)
 		}
 		
 		return links ;
+	}
+
+	/**
+	 * This method will scrape the moodle page and return the m_user id number for
+	 * the currently logged in user
+	 *
+	 * @returns {integer} m_user id number for currently logged in user
+	 */
+	this.getLoggedInUserIdNumber = function()
+	{
+		var a = document.getElementsByClassName('logininfo')[0].children[0] ;
+		var id = a.href.match(/id=(.*)$/)[0] ;
+		
+		return id ;
+	}
+	
+	/**
+	 * This method will scrape the moodle page and return the full name for
+	 * the currently logged in user
+	 *
+	 * @returns {string} full name for currently logged in user
+	 */
+	this.getLoggedInUserFullname = function()
+	{
+		var a = document.getElementsByClassName('logininfo')[0].children[0] ;
+		var fullname = a.innerHTML ;
+
+		return fullname ;
+	}
+	
+	/**
+	 * This method will add html to an existing block in the Moodle page
+	 *
+	 * Example blocks and their class names
+	 *
+	 * SUPPORT - block_cqu_course_support
+	 * HELP - block_cqu_help
+	 * COMMUNICATION - block_cqu_communications
+	 * INFORMATION - block_cqu_course_info
+	 * QUICKMAIL - block_quickmail
+	 * EVALUATION - block_evaluation
+	 * ASSESSMENT - block_cqu_assessment
+	 * LATEST NEWS - block_news_items
+	 * 
+	 * @param   {string} function The unique html class name associated with the block
+	 * @param   {element} html     DOM element object to be appended to contents of block
+	 *
+	 * @returns {boolean} True if the html was added to the block otherwise false
+	 */
+	this.addToBlock = function(blockclassname,html)
+	{
+		try
+		{
+			var tmp = document.createElement("p");
+			tmp.appendChild(html) ;
+			supportDiv = document.getElementsByClassName(blockclassname)[0].getElementsByClassName('content')[0] ;
+			supportDiv.appendChild(tmp) ;
+		}
+		catch(error)
+		{
+			return false ;
+		}
+		return true ;
 	}
 
 	/**
