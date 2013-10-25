@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.4.72
+// @version       0.4.74
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -199,9 +199,9 @@ function mavAddSSILink(balmi)
 {
 	var ssiLink = document.createElement('a') ;
 	var courseCode = balmi.getCourseCode() ;
-	ssiLink.setAttribute('href','https://oltdev.cqu.edu.au/ssi/ssiMain.php?coursecode='+courseCode) ;
+	ssiLink.setAttribute('href','https://olt.cqu.edu.au/ssi/ssiMain.php?coursecode='+courseCode) ;
 	ssiLink.setAttribute('target','_blank') ;
-	courseCodeTextNode = document.createTextNode('Student Engagement Report') ;
+	courseCodeTextNode = document.createTextNode('Student Indicators') ;
 	ssiLink.appendChild(courseCodeTextNode) ;
 	balmi.addToBlock('block_cqu_course_support',ssiLink) ;
 }
