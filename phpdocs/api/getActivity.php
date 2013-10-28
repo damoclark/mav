@@ -103,15 +103,54 @@ $row = $stmt->fetch(PDO::FETCH_ASSOC) ;
 if($row != null)
 	$studentCount = $row['counter'] ;
 
+	
 ////////////////////////////////////////////////////////////////////////////////
-//Get the number of clicks for given link in course
+//Get the stats from the database as per input
 ////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////
 //Collate data to be inserted into the php query template
+////////////////////////////////////////////////////////////////////////////////
 $queryData = array() ;
+
+//Get the activityType setting
 $queryData['activityType'] = $input['settings']['activityType'] ;
-if($input['settings']['groups'][0] != 0) //If there are groups specified add to query
+//If not a valid value of C or S, make it C
+if($queryData['activityType'] != 'C' and $queryData['activityType'] != 'S')
+	$queryData['activityType'] = 'C';
+
+//Get the specific student to query (if specified)	
+if(array_key_exists('student',$input['settings']) and $input['settings']['student'])
+{
+	error_log("Getting activity for specific student ".$queryData['selectedStudent'],E_USER_NOTICE) ;
+	$queryData['selectedStudent'] = strtolower($input['settings']['student']) ;
+
+	//Check value for student is either a number or a character and number string
+	if
+	(
+		!is_numeric($queryData['selectedStudent']) and
+		!preg_match('/^[sqc]\d+$/',$queryData['selectedStudent'])
+	)
+	{
+		error_log("selectedStudent value from json data is not a student number or moodleid",E_USER_ERROR) ;
+		exit(1) ;
+	}
+}
+//Else, instead some groups might have been specified (groups == 0 means no groups)
+elseif($input['settings']['groups'][0] != 0) //If there are groups specified add to query
+{
 	$queryData['selectedGroups'] = $input['settings']['groups'] ;
+
+	//Check all values for selectedGroups are numbers
+	foreach($queryData['selectedGroups'] as $group)
+	{
+		if(!is_numeric($group))
+		{
+			error_log("selectedGroups value from json data contains a non-numeric: $group",E_USER_ERROR) ;
+			exit(1) ;
+		}
+	}
+}
 
 $query = generateSQLQuery('getActivityQueryTemplate.php',$queryData) ;
 

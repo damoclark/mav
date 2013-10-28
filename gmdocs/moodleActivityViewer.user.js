@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.4.74
+// @version       0.5.0
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -28,166 +28,50 @@
 if (window.top != window.self)  
 	exit ;
 
-///////////////////////////////////////////////////////////////////////////////
-//Configure server paths
-///////////////////////////////////////////////////////////////////////////////
-var balmi_config = new balmi_config() ;
-var mav_config = new mav_config() ;
-
-/**
- * @type string Absolute URI to the location of balmi API scripts
- */
-var balmiServerHome = balmi_config.getServerApi() ;
-
-/**
- * @type string Absolute URI to the location of jQuery & jQuery-ui theme files
- */
-var mavJqueryHtml = mav_config.getJqueryHtml() ;
-
-/**
- * @type string Absolute URI to supporting HTML files for MAV (such as busy animation icon)
- */
-var mavHtml = mav_config.getHtml() ;
-
-/**
- * @type string Get version of MAV greasemonkey script
- */
-var mavVersion = mav_config.getVersion() ; //GM_info.script.version ;
-
-/**
- * @type balmi An instance of balmi object to interact with moodle page and balmi API server
- */
-var balmi = new balmi(balmi_config) ;
-
-/**
- * @type string Get version of balmi library
- */
-var balmiVersion = balmi.getVersion() ;
-
-//Turn on/off debugging
-var debug = balmi_config.getDebug() ;
-
-if (debug)
-{
-	console.log('balmiServerHome='+balmiServerHome) ;
-	console.log('mavJqueryHtml='+mavJqueryHtml) ;
-	console.log('mavVersion='+mavVersion) ;
-	console.log('userid='+balmi.getLoggedInUserIdNumber()) ;
-	console.log('fullname='+balmi.getLoggedInUserFullname()) ;
-}
-
-//If there is no course home page link in the breadcrumbs, then this is not
-//a course site in moodle (probably home page)
-if(balmi.getCoursePageLink() == null)
-	exit ;
-
-
-///////////////////////////////////////////////////////////////////////////////
-//Add jQuery and MAV CSS to page
-///////////////////////////////////////////////////////////////////////////////
-var jQueryCSS = GM_getResourceText("jQueryCSS") ;
-addCSS(jQueryCSS) ;
-
-if (debug) console.log('jquery css added') ;
-
-var mavCSS = GM_getResourceText("mavCSS") ;
-GM_addStyle(mavCSS) ;
-
-///////////////////////////////////////////////////////////////////////////////
-//Adding the dialog to the page
-///////////////////////////////////////////////////////////////////////////////
-//Get the div for the dialog
-var MAVcourseSettings = new MAVsettings(balmi.getCourseId()) ;
-var settingsDialogDiv = GM_getResourceText('settingsDialogDiv') ;
-$("body").append(settingsDialogDiv);	
-
-if (debug)
-	console.log('Just before adding busy animation div') ;
-
-///////////////////////////////////////////////////////////////////////////////
-//Adding the busy animation to the page
-///////////////////////////////////////////////////////////////////////////////
-//Add the hidden div to the page, and set the src for the image inside the div
-var busyAnimationDiv = GM_getResourceText('busyAnimationDiv') ;
-$("body").append(busyAnimationDiv) ;
-if (debug)
-	console.log('Got after inserting busyanimationdiv') ;
-
-$("#MAVbusyAnimationImage").attr('src',mavHtml+'/'+$("#MAVbusyAnimationImage").attr('src')) ;
-if (debug)
-	console.log('Got after updating src attribute for animation image') ;
-
-//Configure div to show and hide during ajax calls
-$(document).ajaxStart
-(
-	function()
-	{
-		$("#MAVbusyAnimationImage").show();
-		//alert("Busy on") ;
-	}
-) ;
-$(document).ajaxComplete
-(
-	function()
-	{
-		$("#MAVbusyAnimationImage").hide();
-	}
-) ;
-
-if (debug)
-	console.log('Got after ajaxsetup') ;
-
-///////////////////////////////////////////////////////////////////////////////
-//Add Activity Viewer Links to page
-///////////////////////////////////////////////////////////////////////////////
-window.addEventListener ("load", function() {mavAddActivityViewerSwitch(balmi)}, false);
-
-///////////////////////////////////////////////////////////////////////////////
-//Add link to SSI in the Support block within course site
-///////////////////////////////////////////////////////////////////////////////
-window.addEventListener("load", function() {mavAddSSILink(balmi)}, false) ;
-
-///////////////////////////////////////////////////////////////////////////////
-//If activity viewer is turned on, then update the page
-///////////////////////////////////////////////////////////////////////////////
-window.addEventListener ("load", mavUpdatePage, false);
-
-
-///////////////////////////////////////////////////////////////////////////////
-//Bind functions for the dialog button clicks
-///////////////////////////////////////////////////////////////////////////////
-
-$("#MAVdisplayTextSize").bind("click", function() {
-	$("#MAVdisplayColourLegend").hide();
-	$("#MAVdisplaySizeLegend").fadeIn();
-});
-$("#MAVdisplayColour").bind("click", function() {
-	$("#MAVdisplaySizeLegend").hide();
-	$("#MAVdisplayColourLegend").fadeIn();
-});
-
-
-///////////////////////////////////////////////////////////////////////////////
-//END OF PROGRAM
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-
 
 
 
 //Add activityViewer javascript to page and let it do its thing
 /**
- * Update the Moodle Page if is_on is set
+ * Update the Moodle Page if is_on is set or in urlmode
  * 
  */
 function mavUpdatePage()
 {
-	//If activityViewer "is_on", then load the activityViewer from server and re-render page
-	if (GM_getValue('is_on') == true)
+	if(debug) console.log('fragment='+window.location.hash) ;
+	if(debug) console.log('isurlmode = '+MAVcourseSettings.isUrlMode()) ;
+	if(debug) console.log('fragment='+window.location.hash) ;
+	
+	//If activityViewer "is_on", then load the activityViewer from server and
+	//re-render page
+	if (GM_getValue('is_on') == true || MAVcourseSettings.isUrlMode())
 		generateJSONRequest() ;
+		
 }
 
+function urlModeUpdateMoodleLinks()
+{
+	//If in url mode, then need to rewrite all moodle links to add the url fragment
+	//so that clicking around the moodle site will return the url mode settings
+	if (MAVcourseSettings.isUrlMode())
+	{
+		if (debug) console.log('inside isurlmode in mavupdatepage!!!') ;
+		
+		var moodleLinks = balmi.getMoodleLinks() ;
+		if(debug) console.log('after getmoodlelinks inside mavupdatepage') ;
+		allLinks = document.getElementsByTagName("a") ;
+		
+		for (var i=0; i < allLinks.length; i++)
+		{
+			var linkName = allLinks[i].href.replace(/^(?:https?:\/\/)?moodle\.cqu\.edu\.au\//,'\/') ;
+			
+			//If this is a moodle link, then rewrite it to add the url fragment
+			//but only if the link doesn't already have a fragment (hash)
+			if (moodleLinks.hasOwnProperty(linkName) && allLinks[i].href.indexOf('#') == -1)
+				allLinks[i].href += window.location.hash ;
+		}
+	}
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -432,15 +316,87 @@ function MAVsettings(courseid)
 {
 	//Instance course id (from breadcrumbs)
 	this.courseid = courseid ;
-	//Instance settings for dialog
-	this.JSON = null ;
 	//Default settings for dialog
 	this.defaultJSON =
 	{
 		activityType: "C", //Default to clicks
 		displayMode: "C", //Default to colour
-		groups: [ 0 ] //Default to all students
+		groups: [ 0 ], //Default to all students
+		student: 0 //Default to no specific student
 	} ;
+	//Have our settings come from the a url fragment
+	this.urlMode = false ;
+
+	//Instance settings for dialog - if no settings provided through url, will
+	//be set to null initially
+	this.JSON = this.urlSettings() ;
+
+}
+
+MAVsettings.prototype.urlSettings = function()
+{
+	//Get the fragment from the url (but omit initial # character)
+	var fragment = window.location.hash.substr(1) ;
+
+	if (debug) console.log('fragment='+fragment) ;
+
+	//If there is no fragment
+	if (fragment == '')
+		return null ;
+
+	//Temporary variable to hold the settings
+	var settings = clone(this.defaultJSON) ;
+
+	//Temporary variable to hold the urlmode
+	var mode = this.urlMode ;
+	
+	var parameters = fragment.split('_') ;
+
+	parameters.forEach
+	(
+		function(element,index,array)
+		{
+			var s = element.split(':') ;
+			var parameter = s.shift() ;
+
+			//Only use parameter names that MAV already knows about
+			if (settings.hasOwnProperty(parameter))
+			{
+				//If this parameter requires an array, then store from fragment an array
+				if (settings[parameter] instanceof Array)
+					settings[parameter] = s ;
+				else //Otherwise, store just the first value that it happens to find
+					settings[parameter] = s[0] ;
+			}
+			//Else if parameter is 'mav' and is set true, then we now know we are
+			//definitely in mav urlmode, and its not a moodle fragment
+			else if (parameter == 'mav' && s[0] == true)
+				mode = true ; //Set urlmode in settings instance
+		}
+	) ;
+	
+	//Save the mode into the instance variable
+	this.urlMode = mode ;
+	
+	//If there isn't a mav parameter set to true value (ie 1) in the fragment
+	//then the fragment wasn't meant for mav, and so ignore the fragment and
+	//just return null
+	if (!this.urlMode)
+		settings = null ;
+
+	if (debug) console.log('mav url settings='+JSON.stringify(settings)) ;
+
+	return settings ;	
+}
+
+/**
+ * Method will return true if a url fragment has provided settings for MAV
+ * 
+ * @returns {boolean} True if settings provided through url otherwise false
+ */
+MAVsettings.prototype.isUrlMode = function()
+{
+	return this.urlMode ;
 }
 
 /**
@@ -608,7 +564,8 @@ MAVsettings.prototype.loadJSON = function()
 		var GM_json = GM_getValue("course_"+this.courseid) ;
 		if(GM_json == null || GM_json == '') //If no settings for this course
 		{
-			this.JSON = this.defaultJSON ; // Use default
+			this.JSON = clone(this.defaultJSON) ;
+			//this.JSON = this.defaultJSON ; // Use default
 		}
 		else
 		{
@@ -698,12 +655,12 @@ MAVsettings.prototype.getCourseGroups = function()
       },
       error: function(xhr,status,message)
       {
-        console.log('status='+status) ;
-        console.log('message='+message) ;
+        if(debug) console.log('status='+status) ;
+        if(debug) console.log('message='+message) ;
       },
 			complete: function(xhr,status)
 			{
-				console.log('status='+status) ;
+				if(debug) console.log('status='+status) ;
 				//TODO: Hide the progress spinning wheel
 			}
     }
@@ -777,6 +734,30 @@ function generateJSONRequest()
 				console.log('Exclude unread post tracking links on forum pages') ;
 			delete links[l] ;
 		}
+		else if (links[l][1].indexOf("markposts.php") != -1)
+		{
+			if (debug)
+				console.log('Exclude marking posts unread on forum pages') ;
+			delete links[l] ;
+		}
+		else if (links[l][1].indexOf("?delete") != -1)
+		{
+			if (debug)
+				console.log('Exclude delete forum post link on forum pages') ;
+			delete links[l] ;
+		}
+		else if (links[l][1].indexOf("?prune=") != -1)
+		{
+			if (debug)
+				console.log('Exclude prune forum post link on forum pages') ;
+			delete links[l] ;
+		}
+		else if (links[l][1].indexOf("?reply=") != -1)
+		{
+			if(debug)
+				console.log('Exclude reply forum post link on forum pages') ;
+			delete links[l] ;
+		}
 	}
 	requestData(courseLink,links) ;
 }
@@ -826,17 +807,21 @@ function requestData(courseLink,links)
       success: function(data)
       {
 				updatePage(data) ;
+
+				//Now that the page has been updated with stats, if in urlmode, update
+				//the links to include the urlmode url fragment
+				if (MAVcourseSettings.isUrlMode())
+					urlModeUpdateMoodleLinks() ;
       },
       error: function(xhr,status,message)
       {
-        console.log('status='+status) ;
-        console.log('message='+message) ;
+        if(debug) console.log('status='+status) ;
+        if(debug) console.log('message='+message) ;
       },
 			complete: function(xhr,status)
 			{
 				if (debug)
 					console.log('status='+status) ;
-				//TODO: Hide the progress spinning wheel
 			}
     }
   ) ;
@@ -958,4 +943,191 @@ function addCSS(css)
 	css = css.replace(/url\((images\/ui-[^\.]+.png)\)/gm,"url(" + mavJqueryHtml + "/$1)") ;
 	GM_addStyle(css) ;	
 }
+
+/**
+ * Function to make a copy of an object
+ * 
+ * @param   {Object} obj Object to copy
+ * 
+ * @returns {Object} Returns a copy of obj public properties
+ */
+function clone(obj)
+{
+	if (null == obj || "object" != typeof obj) return obj;
+	var copy = obj.constructor();
+	for (var attr in obj)
+	{
+		if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+	}
+	return copy;
+}
+
+/**
+ * Does str string end with suffix
+ *
+ * http://stackoverflow.com/questions/280634/endswith-in-javascript/280644
+ 
+ * @param   {string} str      String for substring match
+ * @param   {string} suffix   String to match at end of str
+ * 
+ * @returns {boolean} True if str ends with suffix otherwise false
+ */
+function endsWith(str, suffix)
+{
+	return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//START OF SCRIPT
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////////////////
+//Configure server paths
+///////////////////////////////////////////////////////////////////////////////
+var balmi_config = new balmi_config() ;
+var mav_config = new mav_config() ;
+
+/**
+ * @type string Absolute URI to the location of balmi API scripts
+ */
+var balmiServerHome = balmi_config.getServerApi() ;
+
+/**
+ * @type string Absolute URI to the location of jQuery & jQuery-ui theme files
+ */
+var mavJqueryHtml = mav_config.getJqueryHtml() ;
+
+/**
+ * @type string Absolute URI to supporting HTML files for MAV (such as busy animation icon)
+ */
+var mavHtml = mav_config.getHtml() ;
+
+/**
+ * @type string Get version of MAV greasemonkey script
+ */
+var mavVersion = mav_config.getVersion() ; //GM_info.script.version ;
+
+/**
+ * @type balmi An instance of balmi object to interact with moodle page and balmi API server
+ */
+var balmi = new balmi(balmi_config) ;
+
+/**
+ * @type string Get version of balmi library
+ */
+var balmiVersion = balmi.getVersion() ;
+
+//Turn on/off debugging
+var debug = balmi_config.getDebug() ;
+
+if (debug)
+{
+	console.log('balmiServerHome='+balmiServerHome) ;
+	console.log('mavJqueryHtml='+mavJqueryHtml) ;
+	console.log('mavVersion='+mavVersion) ;
+	console.log('userid='+balmi.getLoggedInUserIdNumber()) ;
+	console.log('fullname='+balmi.getLoggedInUserFullname()) ;
+}
+
+//If there is no course home page link in the breadcrumbs, then this is not
+//a course site in moodle (probably home page)
+if(balmi.getCoursePageLink() == null)
+	exit ;
+
+
+///////////////////////////////////////////////////////////////////////////////
+//Add jQuery and MAV CSS to page
+///////////////////////////////////////////////////////////////////////////////
+var jQueryCSS = GM_getResourceText("jQueryCSS") ;
+addCSS(jQueryCSS) ;
+
+if (debug) console.log('jquery css added') ;
+
+var mavCSS = GM_getResourceText("mavCSS") ;
+GM_addStyle(mavCSS) ;
+
+///////////////////////////////////////////////////////////////////////////////
+//Adding the dialog to the page
+///////////////////////////////////////////////////////////////////////////////
+//Get the div for the dialog
+var MAVcourseSettings = new MAVsettings(balmi.getCourseId()) ;
+var settingsDialogDiv = GM_getResourceText('settingsDialogDiv') ;
+$("body").append(settingsDialogDiv);	
+
+if (debug)
+	console.log('Just before adding busy animation div') ;
+
+///////////////////////////////////////////////////////////////////////////////
+//Adding the busy animation to the page
+///////////////////////////////////////////////////////////////////////////////
+//Add the hidden div to the page, and set the src for the image inside the div
+var busyAnimationDiv = GM_getResourceText('busyAnimationDiv') ;
+$("body").append(busyAnimationDiv) ;
+if (debug)
+	console.log('Got after inserting busyanimationdiv') ;
+
+$("#MAVbusyAnimationImage").attr('src',mavHtml+'/'+$("#MAVbusyAnimationImage").attr('src')) ;
+if (debug)
+	console.log('Got after updating src attribute for animation image') ;
+
+//Configure div to show and hide during ajax calls
+$(document).ajaxStart
+(
+	function()
+	{
+		$("#MAVbusyAnimationImage").show();
+		//alert("Busy on") ;
+	}
+) ;
+$(document).ajaxComplete
+(
+	function()
+	{
+		$("#MAVbusyAnimationImage").hide();
+	}
+) ;
+
+if (debug)
+	console.log('Got after ajaxsetup') ;
+
+///////////////////////////////////////////////////////////////////////////////
+//Add Activity Viewer Links to page
+///////////////////////////////////////////////////////////////////////////////
+window.addEventListener ("load", function() {mavAddActivityViewerSwitch(balmi)}, false);
+
+///////////////////////////////////////////////////////////////////////////////
+//Add link to SSI in the Support block within course site
+///////////////////////////////////////////////////////////////////////////////
+window.addEventListener("load", function() {mavAddSSILink(balmi)}, false) ;
+
+///////////////////////////////////////////////////////////////////////////////
+//If activity viewer is turned on, then update the page
+///////////////////////////////////////////////////////////////////////////////
+window.addEventListener ("load", mavUpdatePage, false);
+
+
+///////////////////////////////////////////////////////////////////////////////
+//Bind functions for the dialog button clicks
+///////////////////////////////////////////////////////////////////////////////
+
+$("#MAVdisplayTextSize").bind("click", function() {
+	$("#MAVdisplayColourLegend").hide();
+	$("#MAVdisplaySizeLegend").fadeIn();
+});
+$("#MAVdisplayColour").bind("click", function() {
+	$("#MAVdisplaySizeLegend").hide();
+	$("#MAVdisplayColourLegend").fadeIn();
+});
+
+
+///////////////////////////////////////////////////////////////////////////////
+//END OF PROGRAM
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 

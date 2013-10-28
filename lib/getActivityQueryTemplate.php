@@ -39,6 +39,11 @@ and gm.groupid in
 and gm.groupid = g.id and g.courseid = c.id
 <?php endif; ?>
 -------------------------
+<?php if(array_key_exists('selectedStudent',$queryData)): ?> --If a student selected limit to just that student
+and u.id = l.userid
+and u.username = '<?php echo $queryData['selectedStudent']; ?>'
+<?php endif; ?>
+-------------------------
 <?php if(array_key_exists('weeksSelected',$queryData)): ?> --Limit results to particular weeks TODO Not yet implemented
 and 
 (

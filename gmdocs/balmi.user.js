@@ -183,13 +183,26 @@ function balmi(balmi_config)
 		
 		//Need to match only href links that start with host
 		//TODO: Need to use the window.location property to determine the hostname, rather than hardcoded
+		//RE for matching module-based links in moodle pages
 		modre = /^(?:https?:\/\/)?moodle\.cqu\.edu\.au\/mod\/([^\/]+)\/([^\/]+)$/ ;
+		//RE for matching the course home page link
+		coursere = /^(?:https?:\/\/)?moodle\.cqu\.edu\.au\/(course)\/(view\.php\?.*)$/ ;
+		
+		var courseHomeLink = this.getCoursePageLink() ;
 		
 		var links = {} ;
 		
 		for (var i=0; i < allLinks.length; i++)
 		{
 			var info = allLinks[i].href.match(modre) ;
+			
+			//If this link doesn't match a module test if it matches course home page
+			if (info == null && allLinks[i].href == courseHomeLink.href)
+			{
+				//If so, then we want to add it to the link of links to query
+				info = allLinks[i].href.match(coursere) ;
+			}
+			
 			if (info != null)
 			{
 				var linkName = info.shift().replace(/^(?:https?:\/\/)?moodle\.cqu\.edu\.au\//,'\/') ;
@@ -265,6 +278,43 @@ function balmi(balmi_config)
 
 	/**
 	 * Method for inserting menu into page
+	 *
+	 * For example:
+	 * <code>
+ 	 *	var menuConfig = {
+	 *		settings_menu:
+	 *		[
+	 *			{
+	 *				text: 'Activity Viewer',
+	 *				listeners: { click: null, mouseover: null },
+	 *				submenu:
+	 *				[
+	 *					{
+	 *						id: 'mav_activityViewerElement', //id property for the url a tag
+	 *						text: //Toggle option
+	 *						{
+	 *							on:  'Turn Activity View Off',
+	 *							off: 'Turn Activity View On'
+	 *						},
+	 *						toggle: isMavOn(), //Internal state of toggle - 'on' text will be displayed
+	 *						//url: '#',
+	 *						image: 'http://moodle.cqu.edu.au/theme/image.php?theme=cqu2013&image=i%2Fnavigationitem&rev=391', //Default moodle node image
+	 *						title: 'Toggle Activity Viewer',
+	 *						listeners: { click: mavSwitchActivityViewer }
+	 *					},
+	 *					{
+	 *						text: 'Activity Viewer Settings',
+	 *						title: 'Activity Viewer Settings',
+	 *						image: 'http://moodle.cqu.edu.au/theme/image.php?theme=cqu2013&image=i%2Fnavigationitem&rev=391', //Default moodle node image
+	 *						listeners: { click: mavDisplaySettings }
+	 *					}
+	 *				]
+	 *			}
+	 *		]
+	 *	} ;
+	 *	
+	 *	balmi.insertMenu(menuConfig) ;
+	 * </code>
 	 * 
 	 * @param   {object} menu Menu structure
 	 * 
