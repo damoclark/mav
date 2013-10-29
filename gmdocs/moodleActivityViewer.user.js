@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.5.0
+// @version       0.5.1
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -44,7 +44,7 @@ function mavUpdatePage()
 	
 	//If activityViewer "is_on", then load the activityViewer from server and
 	//re-render page
-	if (GM_getValue('is_on') == true || MAVcourseSettings.isUrlMode())
+	if (isMavOn())
 		generateJSONRequest() ;
 		
 }
@@ -133,6 +133,15 @@ function mavAddActivityViewerSwitch(balmi)
 		]
 	} ;
 	
+	//if in urlMode change the menu options
+	if (MAVcourseSettings.isUrlMode())
+	{
+		//don't show the Activity Viewer Settings option for now
+		menuConfig.settings_menu[0].submenu.splice(1,1) ;
+
+		if(debug) console.log('in urlMode menuConfig='+JSON.stringify(menuConfig)) ;
+	}
+
 	balmi.insertMenu(menuConfig) ;
 }
 
@@ -144,7 +153,11 @@ function mavAddActivityViewerSwitch(balmi)
 function isMavOn()
 {
 	var mav_on = GM_getValue('is_on') ;
-	return mav_on ;
+	
+	var urlMode = MAVcourseSettings.isUrlMode() ;
+	
+	//If either urlMode or mav_on then return true (mav is actually on)
+	return (mav_on || urlMode) ;
 }
 
 /**
@@ -155,7 +168,7 @@ function isMavOn()
 function mavSetMenuElementText()
 {
 	//Set text according to whether its already on or off (including img tag)
-	var switchLinkText = (GM_getValue('is_on')) ? 'Turn Activity View Off' : 'Turn Activity View On' ;
+	var switchLinkText = (isMavOn()) ? 'Turn Activity View Off' : 'Turn Activity View On' ;
 	document.getElementById('mav_activityViewerElement').innerHTML =
 	'<img src="http://moodle.cqu.edu.au/theme/image.php?theme=cqu2013&amp;image=i%2Fnavigationitem&amp;rev=391" title="moodle" class="smallicon navicon" alt="moodle">' + switchLinkText ;
 }
@@ -208,12 +221,8 @@ function mavDisplaySettings()
 					$(this).dialog("close") ;
 					
 					//IF MAV is already turned on, reload page to reflect settings changes
-					if(GM_getValue('is_on') == true)
+					if(isMavOn())
 						window.location.reload() ;
-
-					//If GM_getvalue('is_on') == true
-						//Generate xmlhttpRequest
-						//Update display
 				}
 			}
 		}
@@ -222,8 +231,20 @@ function mavDisplaySettings()
 	
 }
 
+/**
+ * Toggle mav on or off
+ * 
+ */
 function mavSwitchActivityViewer()
 {
+	//If we are in urlMode, then just reload page without url fragment
+	if (MAVcourseSettings.isUrlMode())
+	{
+		GM_setValue('is_on',false) ; //Explicitly turn it off
+		mavTurnOffUrlMode() ;
+		return ;
+	}
+	
 	GM_setValue('is_on',!GM_getValue('is_on')) ;
 	
 	if (GM_getValue('is_on'))
@@ -238,6 +259,20 @@ function mavSwitchActivityViewer()
 		//Reload the page
 		window.location.reload() ;
 	}
+}
+
+/**
+ * Switch off urlMode by reloading page without url fragment options
+ * 
+ */
+function mavTurnOffUrlMode()
+{
+	//Set the window.location url without the hash (fragment) to reload page
+	//http://stackoverflow.com/questions/1397329/how-to-remove-the-hash-from-window-location-with-javascript-without-page-refresh
+	var l = window.location.href.substr(0, window.location.href.indexOf('#')) ;
+	if(debug) console.log('location='+l) ;
+	window.location = l ;
+	return ;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -564,13 +599,15 @@ MAVsettings.prototype.loadJSON = function()
 		var GM_json = GM_getValue("course_"+this.courseid) ;
 		if(GM_json == null || GM_json == '') //If no settings for this course
 		{
-			this.JSON = clone(this.defaultJSON) ;
-			//this.JSON = this.defaultJSON ; // Use default
+			this.JSON = clone(this.defaultJSON) ; // Use default
 		}
 		else
 		{
 			this.JSON = $.parseJSON(GM_json) ; //Otherwise set out instance
 		}
+		//Make sure that student option from default isn't included as that
+		//is only relevant for urlMode
+		delete this.JSON.student ;
 	}
 
 	return this ;
@@ -609,6 +646,10 @@ MAVsettings.prototype.saveJSON = function()
 	
 	//set the mav version
 	this.JSON.mavVersion = mavVersion ;
+	
+	//Don't save the student option as this is only for urlMode
+	//TODO This might need to be rethought into the future
+	delete this.JSON.student ;
 	
 	//Store in GM
 	GM_setValue("course_"+this.courseid,JSON.stringify(this.JSON)) ;
