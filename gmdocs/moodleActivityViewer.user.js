@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.5.1
+// @version       0.5.4
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -895,6 +895,25 @@ function updatePage(data)
 			break ;
 	}
 	
+		
+	//If displaymode is heatmap (Colour)
+	//position the fixed colour legend to the centre of the browser window
+	if (displayMode == 'C')
+	{
+		$("#fixedColourLegend").position({
+			of: $("body"),
+			my: "center top",
+			at: "center top"
+		})
+		
+		//make the fixed colour legend draggable in case it's in the way
+		$("#fixedColourLegend").draggable({ containment: "window" })
+			
+		//display the fixed colour legend
+		$("#fixedColourLegend").show();
+	}
+	
+	
 	allLinks = document.getElementsByTagName("a") ;
 	
 	for (var i=0; i < allLinks.length; i++)
@@ -1129,6 +1148,7 @@ $(document).ajaxComplete
 (
 	function()
 	{
+		//close the loading animation
 		$("#MAVbusyAnimationImage").hide();
 	}
 ) ;

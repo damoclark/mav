@@ -100,6 +100,20 @@ a.makealink {
 		display: none;
 }
 
+div#fixedColourLegend {
+	cursor: move;
+	position: fixed;
+	z-index: 99999;
+	width: auto;
+	padding: 6px;
+	background: white;
+	text-align: center;
+	border: 1px solid #cccccc;
+	border-radius: 4px;
+	-moz-border-radius: 4px;
+}
+div#fixedColourLegend .mavColourLegend { padding: 0px 15px 0px 0px; }
+div#fixedColourLegend p { margin: 0px; padding: 0px; }
 
 /*a.makealink:visited {
 	color: #818600 !important;
