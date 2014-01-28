@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.5.4
+// @version       0.6.0
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -27,7 +27,6 @@
 //don't run on frames or iframes
 if (window.top != window.self)  
 	exit ;
-
 
 
 
@@ -863,6 +862,14 @@ function requestData(courseLink,links)
 			{
 				if (debug)
 					console.log('status='+status) ;
+				
+				//We need to check for updates for MAV here after the page has been
+				//redrawn rather than during the mav server requests, because if there
+				//is an update available and the lecturer tries to update MAV, it will
+				//interrupt the ajax call (in other words, the page won't get updated)
+				//So we check for updates here when mav is turned on so that if the
+				//lecturer clicks to update, the page has already been redrawn
+				mavSelfUpdate() ;
 			}
     }
   ) ;
@@ -894,7 +901,29 @@ function updatePage(data)
 			activityText = ' students' ;
 			break ;
 	}
-	
+
+	//TODO this section we can add in a tag at the top which displays the current student or group 	
+	//if in student view
+	/*
+		$("#fixedStudentDetails").position({
+			of: $("body"),
+			my: "right top",
+			at: "right top"
+		})
+		
+		//make the fixed colour legend draggable in case it's in the way
+		$("#fixedStudentDetails").draggable({ containment: "window" })
+			
+		//add the student details - something crappy like this - can parameterise and make better later
+		$("#fixedStudentDetails").html("<p>studentnumber</p>");
+			
+		//display the fixed colour legend
+		$("#fixedStudentDetails").show();
+	*/		
+	//else 
+		//make sure it's hidden
+		//$("#fixedStudentDetails").hide();
+		
 		
 	//If displaymode is heatmap (Colour)
 	//position the fixed colour legend to the centre of the browser window
@@ -1037,7 +1066,89 @@ function endsWith(str, suffix)
 	return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
+function mavSelfUpdate()
+{
+	///////////////////////////////////////////////////////////////////////////////
+	//Manually check for updates to script
+	///////////////////////////////////////////////////////////////////////////////
+	
+	var lastCheckUpdateString = mav_config.getLastCheckUpdateAsString() ;
+	if(debug) console.log('last check for updates was '+lastCheckUpdateString) ;
+		
+	if(debug) console.log('checking against last update time is more than 1day') ;
+	//if has been 1day since last check with server to see if there is an update
+	if (mav_config.needsCheckUpdate())
+	{
+		if(debug) console.log('We need to check for update') ;
+		
+		//Update the last check to now
+		mav_config.setLastCheckUpdate() ;
+		
+		var currentMavVersion = mav_config.getVersion() ;
+		
+		var gmCheckUpdateScriptPath = mav_config.getGmScriptPath() ;
+		//ajax in latest script version
+		var xhr = $.ajax
+		(
+			{
+				url: gmCheckUpdateScriptPath+'/checkUpdate.php',
+				xhr: function(){return new GM_XHR();}, //Use GM_xmlhttpRequest
+				type: 'GET',
+				data: { "version": currentMavVersion },
+				dataType: 'json', 
+				success: function(data)
+				{
+					if (data.response && data.update)
+					{
+						if(debug) console.log('Updating now from version '+currentMavVersion+' to version '+data.version) ;
+						$("#MAVselfUpdateDialog").dialog(
+						{
+							width: 570,
+							height: 570,
+							title: "Moodle Activity Viewer Update",
+							modal: true,
+							buttons: {
+								"Not now": function() {
+									// STOP your greesemonkey update here
+									$(this).dialog("close");
+								},
+								"Install": function() {
+									$(this).dialog("close") ;
+									//close the loading animation
+									$("#MAVbusyAnimationImage").hide();
+									window.location.href = gmCheckUpdateScriptPath+'/moodleActivityViewer.user.js' ;
+								}
+							}
+						
+						});
 
+						//if (confirm('Press okay (and then click Install) to update to latest Moodle Activity Viewer or cancel to delay until tomorrow.'))
+						//{
+						//	//close the loading animation
+						//	$("#MAVbusyAnimationImage").hide();
+						//	window.location.href = gmCheckUpdateScriptPath+'/moodleActivityViewer.user.js' ;
+						//}
+					}
+					else if (!data.response)
+					{
+						console.log('Response from checkUpdate.php - updates disabled') ;
+					}
+					else if (!data.update)
+					{
+						console.log('Running latest version') ;
+					}
+				},
+				error: function(xhr,status,message)
+				{
+					if(debug) console.log('error making ajax request to '+gmCheckUpdateScriptPath+'/checkUpdate.php with status='+status) ;
+					if(debug) console.log('message='+message) ;
+				},
+			}
+		) ;
+		
+	}
+	
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1112,12 +1223,15 @@ var mavCSS = GM_getResourceText("mavCSS") ;
 GM_addStyle(mavCSS) ;
 
 ///////////////////////////////////////////////////////////////////////////////
-//Adding the dialog to the page
+//Adding the dialogs to the page
 ///////////////////////////////////////////////////////////////////////////////
-//Get the div for the dialog
+//Get the div for the dialogs
 var MAVcourseSettings = new MAVsettings(balmi.getCourseId()) ;
 var settingsDialogDiv = GM_getResourceText('settingsDialogDiv') ;
-$("body").append(settingsDialogDiv);	
+$("body").append(settingsDialogDiv);
+
+//Set the src for the image in the selfupdate div
+$("#MAVselfUpdateDialogImage").attr('src',mavHtml+'/'+$("#MAVselfUpdateDialogImage").attr('src')) ;
 
 if (debug)
 	console.log('Just before adding busy animation div') ;
@@ -1171,6 +1285,12 @@ window.addEventListener("load", function() {mavAddSSILink(balmi)}, false) ;
 ///////////////////////////////////////////////////////////////////////////////
 window.addEventListener ("load", mavUpdatePage, false);
 
+///////////////////////////////////////////////////////////////////////////////
+//Self update - check for updates to the script on load if mav is off
+//Self update - MAV calls mavSelfUpdate in requestData function as well
+///////////////////////////////////////////////////////////////////////////////
+if (!isMavOn())
+	window.addEventListener ("load", mavSelfUpdate, false);
 
 ///////////////////////////////////////////////////////////////////////////////
 //Bind functions for the dialog button clicks
@@ -1185,6 +1305,48 @@ $("#MAVdisplayColour").bind("click", function() {
 	$("#MAVdisplayColourLegend").fadeIn();
 });
 
+
+
+
+
+
+
+//Get last update check date/time
+//console.log('Checking for updates') ;
+//var lastUpdateString = GM_getValue('lastcheckupdate') ;
+//console.log('lastupdatestring='+lastUpdateString) ;
+//if (lastUpdateString === undefined)
+//{
+//	console.log('setting lastupdate GM value to '+new Date().toISOString()) ;
+//	GM_setValue('lastupdate',new Date().toISOString()) ;
+//}
+//else
+//{
+//	console.log('checking against last update time is more than 1hr') ;
+//	//Get current date/time
+//	var currentDate = new Date() ;
+//
+//	var lastUpdateDate = new Date(lastUpdateString) ;
+//	
+//	//If last update longer than 1hr, update
+//	if (currentDate.getTime() - lastUpdateDate.getTime() > 3600000) //Greater than 1hr
+//	{
+//		//update
+//		console.log('We need to check for update') ;
+//		
+//		//ajax in latest script version
+//		
+//		//check version is newer or not
+//		
+//		console.log('Updating now') ;
+//		if (confirm('Press okay (and then click Install) to update to latest Moodle Activity Viewer or cancel to delay for an hour.'))
+//		{
+//			//TODO
+//			//http://stackoverflow.com/questions/12613421/how-to-get-a-greasemonkey-scripts-original-installation-url
+//			window.location.href = 'https://oltdev.cqu.edu.au/mav/gm/moodleActivityViewer.user.js' ;
+//		}
+//	}
+//}
 
 ///////////////////////////////////////////////////////////////////////////////
 //END OF PROGRAM

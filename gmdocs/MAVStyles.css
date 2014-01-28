@@ -100,7 +100,7 @@ a.makealink {
 		display: none;
 }
 
-div#fixedColourLegend {
+div#fixedColourLegend, div#fixedStudentDetails {
 	cursor: move;
 	position: fixed;
 	z-index: 99999;
@@ -113,7 +113,9 @@ div#fixedColourLegend {
 	-moz-border-radius: 4px;
 }
 div#fixedColourLegend .mavColourLegend { padding: 0px 15px 0px 0px; }
-div#fixedColourLegend p { margin: 0px; padding: 0px; }
+div#fixedColourLegend p { margin: 0px; padding: 0px; font-weight:bold;  }
+
+#MAVselfUpdateDialog img { padding: 5px; border: 1px solid #ccc; margin: 10px 0px 10px 0px; }
 
 /*a.makealink:visited {
 	color: #818600 !important;
