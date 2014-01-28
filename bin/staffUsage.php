@@ -6,16 +6,22 @@
  */
 
  
-/**
- * @var array An array of staff actions using MAV in json format
- */
-$activityJSON = file('../log/getActivity.txt',FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES) ;
+$activityFile = fopen('../log/getActivity.txt','r') ;
+
+if(!$activityFile)
+{
+	error_log("Error opening log file",E_USER_ERROR) ;
+	exit(1) ;
+}
 
 $activity = array() ;
-foreach($activityJSON as $a)
+while(($line = fgets($activityFile)))
 {
-	array_push($activity,json_decode($a,true)) ;
+	if($line === '')
+		continue ;
+	array_push($activity,json_decode($line,true)) ;
 }
+fclose($activityFile) ;
 
 $users = array() ;
 
