@@ -6,55 +6,41 @@
 --  @ date: 9th Oct 2013
 
 select
-<?php if($queryData['activityType'] == 'C'): ?>
-l.id
+<?php if($queryData['activityType'] == 'C'): ?> --If select count of clicks
+sum(ls.clicks) as total
 <?php elseif($queryData['activityType'] == 'S'): ?> --If select count of students
-distinct u.id
+count(distinct ls.userid) as total
 <?php endif; ?>
 -------------------------
 --Default tables
-from m_log l, m_role r,m_role_assignments ra,m_context con,m_user u, m_course c
+from m_log_summary ls
+-------------------------
+<?php if(array_key_exists('selectedStudent',$queryData)): ?> --If a student selected limit to just that student
+, m_user u
+<?php endif; ?>
 -------------------------
 <?php if(array_key_exists('selectedGroups',$queryData)): ?> --If Groups selected
 , m_groups g, m_groups_members gm
 <?php endif; ?>
 -------------------------
---Limit results to students only (no staff)
+--Get the specifics for the link
 where
-con.contextlevel = 50
-and con.id = ra.contextid
-and r.id = ra.roleid
-and ra.userid = u.id
-and r.archetype = 'student'
-and con.instanceid = c.id
-and l.userid = u.id
-and l.course = c.id
+ls.module = :module
+and ls.url = :url
+and ls.course = :course 
 -------------------------
-<?php if(array_key_exists('selectedGroups',$queryData)): ?> --If Groups selected limit to those
-and u.id = gm.userid
+<?php if(array_key_exists('selectedGroups',$queryData)): ?> --If Groups selected
+--If Groups selected limit to those
+and ls.userid = gm.userid
 and gm.groupid in
 (
 <?php echo implode(',',$queryData['selectedGroups']); ?>
 ) --Comma sep list of ids
-and gm.groupid = g.id and g.courseid = c.id
+and gm.groupid = g.id and g.courseid = ls.course
 <?php endif; ?>
 -------------------------
 <?php if(array_key_exists('selectedStudent',$queryData)): ?> --If a student selected limit to just that student
-and u.id = l.userid
+and u.id = ls.userid
 and u.username = '<?php echo $queryData['selectedStudent']; ?>'
 <?php endif; ?>
--------------------------
-<?php if(array_key_exists('weeksSelected',$queryData)): ?> --Limit results to particular weeks TODO Not yet implemented
-and 
-(
---	l.time between 1 and 8 
---	or
---	l.time between 2 and 9
-)
-<?php endif; ?>
--------------------------
---Get the specifics for the link
-and l.module = :module
-and l.url = :url
-and l.course = :course 
 ;

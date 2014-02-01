@@ -164,13 +164,23 @@ foreach($input['links'] as $link => $data)
 {
 	$module = $data[0] ;
 	$url = $data[1] ;
+	//@todo Check return value from execute to see if query failed
 	$stmt->execute(array(':module'=>$module,':url'=>$url,':course'=>$courseid)) ;
 	
-	$rowCount = $stmt->rowCount() ;
+	$result = $stmt->fetch(PDO::FETCH_NUM) ;
+	
+	$result = $result[0] ;
+	//If querying clicks, query uses sum function which returns null if there
+	//are no rows returned to sum, so detect this and set to 0
+	if($result === null)
+		$result = 0 ;
+	
 	if(getenv('DEBUG'))
-		error_log("module=$module, url=$url, course=$courseid, count=$rowCount") ;
+	{
+		error_log("module=$module, url=$url, course=$courseid, count=".$result) ;
+	}
 
-	$output[$link] = $rowCount ;
+	$output[$link] = $result ;
 }
 
 $output = array('data' => $output) ;
