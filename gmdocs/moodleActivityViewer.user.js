@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.6.0
+// @version       0.6.1
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -293,15 +293,17 @@ function initAccordion()
 	//init the select weeks jquery buttons
 	$("input:button").button();
 	$("#MAVdisplayModes, #MAVTypes").buttonset();
-	
-	$("#timeframe_selectall").bind("click", function(e) {			
-		//tick all weeks
-		$(".MAVTimeframe").attr('checked',true).prop('checked',true);
-	});
-	$("#timeframe_selectnone").bind("click", function(e) {			
-		//untick all weeks
-		$(".MAVTimeframe").prop("checked",false).removeAttr("checked");
-	});
+
+	//Removed timeframe code for now
+	//Also commented out matching HTML in settingsDialogDiv.html
+	//$("#timeframe_selectall").bind("click", function(e) {			
+	//	//tick all weeks
+	//	$(".MAVTimeframe").attr('checked',true).prop('checked',true);
+	//});
+	//$("#timeframe_selectnone").bind("click", function(e) {			
+	//	//untick all weeks
+	//	$(".MAVTimeframe").prop("checked",false).removeAttr("checked");
+	//});
 	
 	
 }
