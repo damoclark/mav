@@ -12,7 +12,7 @@ $browser = get_browser(null,true) ;
 
 //Set variables in template
 $smarty->assign('browser',$browser) ;
-$smarty->assign('title', "MAV installation and setup");
+$smarty->assign('title', "Moodle Activity Viewer (MAV) Installation and Setup");
 $smarty->assign('siteTitle', "Moodle Activity Viewer");
 $smarty->assign('loggedin', true);  
 $smarty->assign('breadcrumbsExists', false); 

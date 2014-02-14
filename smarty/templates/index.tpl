@@ -54,7 +54,7 @@
 		<div class="ui-state-error ui-corner-all">
             <p><img src="images/firefoxLogo.png" alt="Firefox" /></p>
             <h2>Sorry, your version of Firefox needs to be updated.</h2>
-            <p>You are using an old version of Firefox (version {$browser.version}).  Please <a href="https://download.mozilla.org/" target="_blank">download and update your Firefox</a> to the latest version.</p>
+            <p>You are using an old version of Firefox (version {$browser.version}).  Please visit the <a href="http://support.mozilla.org/en-US/kb/update-firefox-latest-version" target="_blank">Firefox Update Instructions Page</a> to update to the latest version before installing Moodle Activity Viewer (MAV).</p>
         </div>
 		
         
@@ -65,8 +65,10 @@
     <div class="ui-state-error ui-corner-all">
     	<p><img src="images/firefoxLogo.png" alt="Firefox" /></p>
         <h2>Sorry, the Moodle Activity Viewer only works with Firefox</h2>
-		<p>You are using {$browser.browser}.  To use Moodle Activity Viewer, you need to <a href="https://download.mozilla.org/" target="_blank">download and install Firefox</a>.</p>
-		<p>If you need assistance, contact <a href='mailto:d.clark@cqu.edu.au'>Damien Clark</a> or <a href='c.beer@cqu.edu.au'>Colin Beer</a> from Learning and Teaching Services.</p>
+		<p>You are using {$browser.browser}.  To use Moodle Activity Viewer, you need to install Firefox. </p>
+		<p>If you are using a CQUni  PC computer, you can install Firefox by clicking Start, Control Panel, then click Run Advertised Programs.  Then select Mozilla Firefox from the list.</p>
+		<p>If you are using a Mac computer or your own personal computer, you can <a href="https://download.mozilla.org/" target="_blank">download and install Firefox</a> from Mozilla.</p>
+		<p>If you need assistance, please contact the <a href='mailto:tasac@cqu.edu.au'>Technology and Services Assistance Centre (TaSAC)</a> (Ext. 9090).</p>
     </div>
      
     
