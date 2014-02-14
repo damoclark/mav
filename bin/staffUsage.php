@@ -62,9 +62,13 @@ uasort($users,function($a,$b){ return ($b['timestamp'] - $a['timestamp']) ;}) ;
 //uasort($users,function($a,$b){ return version_compare($b['version'],$a['version']) ;}) ;
 //Sort the list of users according to number of accesses
 //uasort($users,function($a,$b){ return ($b['count'] - $a['count']) ;}) ;
+
+//Get the timezone from the current time - use when outputting in foreach
+$time = new DateTime() ;
+$timezone = $time->getTimezone() ;
 foreach($users as $user => $data)
 {
-	echo $user . " --> " . $data['version'] . " (" . DateTime::createFromFormat('U',$data['timestamp'])->format('r') . ") [" . $data['count'] . "]\n" ;
+	echo $user . " --> " . $data['version'] . " (" . DateTime::createFromFormat('U',$data['timestamp'])->setTimezone($timezone)->format('r') . ") [" . $data['count'] . "]\n" ;
 }
 
 
