@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.6.1
+// @version       0.6.2
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -78,16 +78,17 @@ function urlModeUpdateMoodleLinks()
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-function mavAddSSILink(balmi)
-{
-	var ssiLink = document.createElement('a') ;
-	var courseCode = balmi.getCourseCode() ;
-	ssiLink.setAttribute('href','https://olt.cqu.edu.au/ssi/ssiMain.php?coursecode='+courseCode) ;
-	ssiLink.setAttribute('target','_blank') ;
-	courseCodeTextNode = document.createTextNode('Student Indicators') ;
-	ssiLink.appendChild(courseCodeTextNode) ;
-	balmi.addToBlock('block_cqu_course_support',ssiLink) ;
-}
+//Commented out as no longer required
+//function mavAddSSILink(balmi)
+//{
+//	var ssiLink = document.createElement('a') ;
+//	var courseCode = balmi.getCourseCode() ;
+//	ssiLink.setAttribute('href','https://olt.cqu.edu.au/ssi/ssiMain.php?coursecode='+courseCode) ;
+//	ssiLink.setAttribute('target','_blank') ;
+//	courseCodeTextNode = document.createTextNode('Student Indicators') ;
+//	ssiLink.appendChild(courseCodeTextNode) ;
+//	balmi.addToBlock('block_cqu_course_support',ssiLink) ;
+//}
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1280,7 +1281,8 @@ window.addEventListener ("load", function() {mavAddActivityViewerSwitch(balmi)},
 ///////////////////////////////////////////////////////////////////////////////
 //Add link to SSI in the Support block within course site
 ///////////////////////////////////////////////////////////////////////////////
-window.addEventListener("load", function() {mavAddSSILink(balmi)}, false) ;
+//Commented out as no longer required
+//window.addEventListener("load", function() {mavAddSSILink(balmi)}, false) ;
 
 ///////////////////////////////////////////////////////////////////////////////
 //If activity viewer is turned on, then update the page
