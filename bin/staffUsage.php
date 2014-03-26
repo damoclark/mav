@@ -5,7 +5,12 @@
  * version of MAV for each user using it
  */
 
- 
+if(!array_key_exists(1,$argv))
+{
+	usage() ;
+	exit(1) ;
+}
+
 $activityFile = fopen('../log/getActivity.txt','r') ;
 
 if(!$activityFile)
@@ -23,56 +28,103 @@ while(($line = fgets($activityFile)))
 }
 fclose($activityFile) ;
 
-$users = array() ;
-
-foreach($activity as $a)
+switch($argv[1])
 {
-	if(!array_key_exists($a['username'],$users))
-	{
-		$users[$a['username']] = array
-		(
-			'version'   => 0,
-			'timestamp' => 0,
-			'count'     => 0
-		) ;
-	}
-	//If we don't have a version yet for given user,
-	//or if we find a newer version, then update the list
-	if(version_compare($users[$a['username']]['version'],$a['mavVersion']) < 0)
-	{
-		$users[$a['username']]['version'] = $a['mavVersion'] ;
-	}
-	
-	//Update the timestamp for the given username
-	$users[$a['username']]['timestamp'] = $a['timestamp'] ;
-	
-	//Update the count on accesses for given username
-	$users[$a['username']]['count']++ ;
-
-	//if(array_key_exists('student',$a['settings']) and $a['settings']['student'] !== 0)
-	//if( array_key_exists('student',$a['settings']))
-	//{
-	//	echo $a['username'] . "\n" . json_indent(json_encode($a['settings'],false)) . "\n\n"  ;
-	//}
+	case 'users':
+		latestVersions($activity) ;
+		break ;
+	case 'weeks':
+		weeklyUsage($activity) ;
+		break ;
+	default:
+		usage() ;
+		exit(1) ;
 }
 
-//Sort the list of users according to last accessed timestamp
-uasort($users,function($a,$b){ return ($b['timestamp'] - $a['timestamp']) ;}) ;
-//Sort the list of users according to version number
-//uasort($users,function($a,$b){ return version_compare($b['version'],$a['version']) ;}) ;
-//Sort the list of users according to number of accesses
-//uasort($users,function($a,$b){ return ($b['count'] - $a['count']) ;}) ;
-
-//Get the timezone from the current time - use when outputting in foreach
-$time = new DateTime() ;
-$timezone = $time->getTimezone() ;
-foreach($users as $user => $data)
+function usage()
 {
-	echo $user . " --> " . $data['version'] . " (" . DateTime::createFromFormat('U',$data['timestamp'])->setTimezone($timezone)->format('r') . ") [" . $data['count'] . "]\n" ;
+	echo "Please provide parameter 'users' to get a user-version and usage listing or 'weeks' to get a click count by week of year\n" ;
+	
+}
+
+function weeklyUsage($activity)
+{
+	$weeks = array() ;
+	//Get the timezone from the current time - use when outputting in foreach
+	$time = new DateTime() ;
+	$timezone = $time->getTimezone() ;
+	
+	foreach($activity as $a)
+	{
+		$week = DateTime::createFromFormat('U',$a['timestamp'])->setTimezone($timezone)->format('W') ;
+		if(array_key_exists($week,$weeks))
+			$weeks[$week]++ ;
+		else
+			$weeks[$week] = 1 ;
+	}
+	
+	foreach ($weeks as $week => $count)
+	{
+		echo $week . "," . $count . "\n" ;
+	}
 }
 
 
-
+/**
+ * Output latest version of mav and users
+ * 
+ */
+function latestVersions($activity)
+{
+	$users = array() ;
+	
+	foreach($activity as $a)
+	{
+		if(!array_key_exists($a['username'],$users))
+		{
+			$users[$a['username']] = array
+			(
+				'version'   => 0,
+				'timestamp' => 0,
+				'count'     => 0
+			) ;
+		}
+		//If we don't have a version yet for given user,
+		//or if we find a newer version, then update the list
+		if(version_compare($users[$a['username']]['version'],$a['mavVersion']) < 0)
+		{
+			$users[$a['username']]['version'] = $a['mavVersion'] ;
+		}
+		
+		//Update the timestamp for the given username
+		$users[$a['username']]['timestamp'] = $a['timestamp'] ;
+		
+		//Update the count on accesses for given username
+		$users[$a['username']]['count']++ ;
+	
+		//if(array_key_exists('student',$a['settings']) and $a['settings']['student'] !== 0)
+		//if( array_key_exists('student',$a['settings']))
+		//{
+		//	echo $a['username'] . "\n" . json_indent(json_encode($a['settings'],false)) . "\n\n"  ;
+		//}
+	}
+	
+	//Sort the list of users according to last accessed timestamp
+	uasort($users,function($a,$b){ return ($b['timestamp'] - $a['timestamp']) ;}) ;
+	//Sort the list of users according to version number
+	//uasort($users,function($a,$b){ return version_compare($b['version'],$a['version']) ;}) ;
+	//Sort the list of users according to number of accesses
+	//uasort($users,function($a,$b){ return ($b['count'] - $a['count']) ;}) ;
+	
+	//Get the timezone from the current time - use when outputting in foreach
+	$time = new DateTime() ;
+	$timezone = $time->getTimezone() ;
+	foreach($users as $user => $data)
+	{
+		echo $user . " --> " . $data['version'] . " (" . DateTime::createFromFormat('U',$data['timestamp'])->setTimezone($timezone)->format('r') . ") [" . $data['count'] . "]\n" ;
+	}
+	
+}
 
 
 
