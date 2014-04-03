@@ -63,10 +63,13 @@ function weeklyUsage($activity)
 			$weeks[$week] = 1 ;
 	}
 	
+	$total = 0 ;
 	foreach ($weeks as $week => $count)
 	{
 		echo $week . "," . $count . "\n" ;
+		$total += $count ;
 	}
+	echo "total, $total\n" ;
 }
 
 
