@@ -94,7 +94,7 @@ function latestVersions($activity)
 		}
 		//If we don't have a version yet for given user,
 		//or if we find a newer version, then update the list
-		if(version_compare($users[$a['username']]['version'],$a['mavVersion']) < 0)
+		if(isset($a['mavVersion']) and version_compare($users[$a['username']]['version'],$a['mavVersion']) < 0)
 		{
 			$users[$a['username']]['version'] = $a['mavVersion'] ;
 		}
