@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.6.2
+// @version       0.6.3
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -729,7 +729,11 @@ function generateJSONRequest()
 	if (courseLink == null)
 		exit ;
 	
+	//Get the page they are viewing
+	pageLink = window.location ;
+	
 	if(debug) console.log('course link='+courseLink.href) ;
+	if(debug) console.log('page link='+pageLink.href) ;
 	
 	//Parse the page for moodle links, assemble and generate a JSONP request to get
 	//the stats
@@ -802,7 +806,7 @@ function generateJSONRequest()
 			delete links[l] ;
 		}
 	}
-	requestData(courseLink,links) ;
+	requestData(courseLink,pageLink,links) ;
 }
 
 /**
@@ -812,7 +816,7 @@ function generateJSONRequest()
  * @param   {Object} links    Object with properties holding the links
  * 
  */
-function requestData(courseLink,links)
+function requestData(courseLink,pageLink,links)
 {
 	//Input for the getActivity.php script to work with
 	var settings = MAVcourseSettings.getJSON() ;
@@ -822,6 +826,7 @@ function requestData(courseLink,links)
 			'mavVersion': mavVersion,
 			'settings': settings,
 			'courselink': courseLink.href,
+			'pagelink': pageLink.href,
 			'links': links
 		}
 	) ;

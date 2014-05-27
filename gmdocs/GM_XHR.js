@@ -75,6 +75,8 @@ function GM_XHR() {
                 for (var k in rsp) {
                     that[k] = rsp[k];
                 }
+                // now we call onreadystatechange
+                that.onreadystatechange();
             }
         });
     };
