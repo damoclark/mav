@@ -1,5 +1,12 @@
 <?php
 
+require_once('clignition.php') ;
+
+$ignition = new clignition(false) ;
+
+require_once('Term.php') ;
+require_once('array_keys_exist.php') ;
+
 /**
  * Go through the log/getActivity.txt file contents and identify the latest
  * version of MAV for each user using it
@@ -25,6 +32,11 @@ while(($line = fgets($activityFile)))
 	if($line === '')
 		continue ;
 	array_push($activity,json_decode($line,true)) ;
+	//if($activity[count($activity)-1]['timestamp'] > 1400000000)
+	//{
+	//	echo $activity[count($activity)-1]['courselink'] . "\n" ;
+	//	//echo json_indent($line) ;
+	//}
 }
 fclose($activityFile) ;
 
@@ -35,6 +47,9 @@ switch($argv[1])
 		break ;
 	case 'weeks':
 		weeklyUsage($activity) ;
+		break ;
+	case 'types':
+		pageTypeUsage($activity) ;
 		break ;
 	default:
 		usage() ;
@@ -49,29 +64,119 @@ function usage()
 
 function weeklyUsage($activity)
 {
-	$weeks = array() ;
-	//Get the timezone from the current time - use when outputting in foreach
-	$time = new DateTime() ;
-	$timezone = $time->getTimezone() ;
+	/**
+	 * @var array An associative array holding
+	 *	array
+	 *	(
+	 *		'{strm}' => array
+	 *		(
+	 *			'{week}' => array
+	 *			(
+	 *				'views' => '{count}',
+	 *				'staff' => array
+	 *				(
+	 *					'{username}' => '{count}'
+	 *				)
+	 *			)
+	 *		)
+	 *	) ;
+	 */
+	$terms = array() ;
 	
-	foreach($activity as $a)
+	//Iterate over all the activity
+	foreach ($activity as $a)
 	{
-		$week = DateTime::createFromFormat('U',$a['timestamp'])->setTimezone($timezone)->format('W') ;
-		if(array_key_exists($week,$weeks))
-			$weeks[$week]++ ;
+		//Get the timestamp for the activity
+		$timestamp = DateTime::createFromFormat('U',$a['timestamp']) ;
+		//Work out what term it was in
+		$term = new Term($timestamp) ;
+		//Get the strm representing the term
+		$strm = $term->getStrm() ;
+		//Get the week of term that it happened
+		$week = $term->getWeek($timestamp) ;
+		//Get the week as a week epoch
+		$weekEpoch = $week->getWeekEpoch() ;
+		//If we already have a count for this term/week combination, add to it
+		if(array_keys_exist(array($strm,$weekEpoch,'views'),$terms))
+			$terms[$strm][$weekEpoch]['views']++ ;
+		//Otherwise start count for this term/week combination
 		else
-			$weeks[$week] = 1 ;
+			$terms[$strm][$weekEpoch]['views'] = 1 ;
+			
+		if(array_keys_exist(array($strm,$weekEpoch,'staff',$a['username']),$terms))
+			$terms[$strm][$weekEpoch]['staff'][$a['username']]++ ;
+		else
+			$terms[$strm][$weekEpoch]['staff'][$a['username']] = 1 ;
 	}
+
+	//Sort the terms by term
+	ksort($terms,SORT_NUMERIC) ;
 	
 	$total = 0 ;
-	foreach ($weeks as $week => $count)
+	foreach ($terms as $strm => $weeks)
 	{
-		echo $week . "," . $count . "\n" ;
-		$total += $count ;
+		ksort($terms[$strm],SORT_NUMERIC) ;
+		foreach ($terms[$strm] as $week => $rec)
+		{
+			$term = new Term($strm) ;
+			$week = $term->getWeek($week) ;
+			$week = $week->getWeekName() ;
+			$count = $rec['views'] ;
+			$staffCount = count($rec['staff']) ;
+			echo "$strm, $week, $count, $staffCount\n" ;
+			$total += $count ;
+		}
 	}
 	echo "total, $total\n" ;
 }
 
+/**
+ * Break down the activity according to Moodle modules or page types
+ * 
+ * @param array $activity The array of activity data
+ */
+function pageTypeUsage($activity)
+{
+	$modules = array() ;
+	
+	$noPageLink = 0 ;
+	foreach ($activity as $a)
+	{
+		//If we don't have the page link, just skip
+		if(!array_key_exists('pagelink',$a))
+		{
+			$noPageLink++ ;
+			continue ;
+		}
+		
+		$matches = array() ;
+		//http:\/\/lms.server.com\/course\/view.php?id=42041
+		if(preg_match('/^https?:\/\/[^\/]+\/course\//',$a['pagelink']))
+		{
+			if(!array_key_exists('course',$modules))
+				$modules['course'] = 1;
+			else
+				$modules['course']++ ;
+		}
+		//http:\/\/lms.server.com\/mod\/forum\/view.php?id=742982
+		elseif(preg_match('/^https?:\/\/[^\/]+\/mod\/([^\/]+)\/(.*)$/',$a['pagelink'],$matches))
+		{
+			array_shift($matches) ;
+			if(!array_key_exists($matches[0],$modules))
+				$modules[$matches[0]] = 1;
+			else
+				$modules[$matches[0]]++ ;
+		}
+	}
+	asort($modules,SORT_NUMERIC) ;
+	
+	echo "MAV Page Views by Page Type\n" ;
+	foreach ($modules as $module => $count)
+	{
+		echo "$module,$count\n" ;
+	}
+	echo "Unknown page views: $noPageLink\n" ;
+}
 
 /**
  * Output latest version of mav and users
@@ -229,6 +334,7 @@ function json_indent($json)
 
 	return $result;
 }
+
 
 
 ?>
