@@ -163,9 +163,13 @@ function balmi(balmi_config)
 	}
 	
 	/**
-	 * Traverse current moodle page and retrieve all links back to Moodle in format
-	 * compatible with balmi server API getActivity.php
+	 * If provided an array of Element objects, parse those links and generate
+	 * a data structure (breaking the links into their various components)
+	 * compatible with the getActivity.php server script of MAV.  If no array then
+	 * traverse current moodle page and retrieve all links back to Moodle. 
 	 *
+	 * @param {Array} An optional array of a tag objects
+	 * 
 	 * data structure returned looks like an object of the form for each link
 	 * {
 	 *   "/mod/forum/view.php?id=12345": ["forum","view.php?id=12345"]
@@ -174,11 +178,12 @@ function balmi(balmi_config)
 	 * 
 	 * @returns {object} List of Moodle links in format compatible with getActivity.php
 	 */
-	this.getMoodleLinks = function()
+	this.getMoodleLinks = function(l)
 	{
-		var allLinks = document.getElementsByTagName("a") ;
+		//If no links are provided, then get all links
+		var allLinks = l || document.getElementsByTagName("a") ;
 		
-		//alert("number of all links="+allLinks.length) ;
+		//console.log("number of all links="+allLinks.length) ;
 		
 		
 		//Need to match only href links that start with host

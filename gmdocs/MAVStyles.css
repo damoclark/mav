@@ -16,72 +16,6 @@ p.MAVTypeExample {
 	-moz-columns: 3; /* Firefox */	
 }
 
-.mavColour0 {
-	background-color: #ebff9c;
-	-moz-box-shadow:0px 0px 15px #ebff9c;
-	box-shadow:0px 0px 15px #ebff9c;
-	color: black !important;
-}
-.mavColour1 {
-	background-color: #fcff9c;
-	-moz-box-shadow:0px 0px 15px #fcff9c;
-	box-shadow:0px 0px 15px #fcff9c;
-	color: black !important;
-}
-.mavColour2 {
-	background-color: #ffee9c;
-	-moz-box-shadow:0px 0px 15px #ffee9c;
-	box-shadow:0px 0px 15px #ffee9c;
-	color: black !important;
-}
-.mavColour3 {
-	background-color: #ffeb9c;
-	-moz-box-shadow:0px 0px 15px #ffeb9c;
-	box-shadow:0px 0px 15px #ffeb9c;
-	color: black !important;
-}
-.mavColour4 {
-	background-color: #ffd49c;
-	-moz-box-shadow:0px 0px 15px #ffd49c;
-	box-shadow:0px 0px 15px #ffd49c;
-	color: black !important;
-}
-.mavColour5 {
-	background-color: #ffc69c;
-	-moz-box-shadow:0px 0px 15px #ffc69c;
-	box-shadow:0px 0px 15px #ffc69c;
-	color: black !important;
-}
-.mavColour6 {
-	background-color: #ffba9c;
-	-moz-box-shadow:0px 0px 15px #ffba9c;
-	box-shadow:0px 0px 15px #ffba9c;
-	color: black !important;
-}
-.mavColour7 {
-	background-color: #ffb19c;
-	-moz-box-shadow:0px 0px 15px #ffb19c;
-	box-shadow:0px 0px 15px #ffb19c;
-	color: black !important;
-}
-.mavColour8 {
-	background-color: #ff9c9c;
-	-moz-box-shadow:0px 0px 15px #ff9c9c;
-	box-shadow:0px 0px 15px #ff9c9c;
-	color: black !important;
-}
-.mavColour9 {
-	background-color: #ff8484;
-	-moz-box-shadow:0px 0px 15px #ff8484;
-	box-shadow:0px 0px 15px #ff8484;
-	color: black !important;
-}
-.mavColour10 {
-	background-color: #ff6e6e;
-	-moz-box-shadow:0px 0px 15px #ff6e6e;
-	box-shadow:0px 0px 15px #ff6e6e;
-	color: black !important;
-}
 .mavColourLegend { padding: 0px 30px 0px 0px; margin-right: 3px;}
 
 div.ui-dialog { z-index:10000; }
@@ -89,7 +23,12 @@ a.makealink {
 	cursor: pointer;	
 	color: #2069C8;
 }
-
+div.ui-dialog a {	
+	color: #2069C8;
+}
+div.ui-dialog a:hover {
+	color: #c6006f
+}
 .MAVbusyAnimation {
     position: fixed;
     top: 50%;
@@ -97,7 +36,7 @@ a.makealink {
     margin-top: -50px;
     margin-left: -50px;
     z-index: 1000;
-		display: none;
+	display: none;
 }
 
 div#fixedColourLegend, div#fixedStudentDetails {
@@ -124,3 +63,93 @@ a.makealink:hover {
 	color: #c6006f !important;
 }
 */
+
+table.studentAccess {width: 100%; font-size: 11px; margin-top: 20px;}
+table.studentAccess th {  
+	border: 1px solid #D8D8D8; 
+	border-collapse: collapse;
+	color: #003567;
+	background-color: #F4F7DC;
+	text-align: left;
+}
+table.studentAccess td { 
+	border: 1px solid #D8D8D8; 
+	border-collapse: collapse;
+}
+table.studentAccess tr:nth-child(odd) td {
+    background-color: #F7FBFB;
+}
+div#studentNoActivityList, div#studentActivityList { height: auto; }
+div#MAVstudentActivityTab {border: none; position: relative;}
+span.ui-icon {float:left; margin-right: 6px; margin-top: 2px}
+
+/* CQU specific, this part in particular over-rides some custom moodle theme button stuff */
+ul.buttons a.makealink { border: none !important; background: none; text-align: left; padding-left: 5px; }
+
+/* MAV specific, these are important styles with background overrides that provide the heapmap effect on the links */
+.mavColour0 {
+	background-color: #ebff9c !important;
+	-moz-box-shadow:0px 0px 15px #ebff9c;
+	box-shadow:0px 0px 15px #ebff9c;
+	color: black !important;
+}
+.mavColour1 {
+	background-color: #fcff9c !important;
+	-moz-box-shadow:0px 0px 15px #fcff9c;
+	box-shadow:0px 0px 15px #fcff9c;
+	color: black !important;
+}
+.mavColour2 {
+	background-color: #ffee9c !important;
+	-moz-box-shadow:0px 0px 15px #ffee9c;
+	box-shadow:0px 0px 15px #ffee9c;
+	color: black !important;
+}
+.mavColour3 {
+	background-color: #ffeb9c !important;
+	-moz-box-shadow:0px 0px 15px #ffeb9c;
+	box-shadow:0px 0px 15px #ffeb9c;
+	color: black !important;
+}
+.mavColour4 {
+	background-color: #ffd49c !important;
+	-moz-box-shadow:0px 0px 15px #ffd49c;
+	box-shadow:0px 0px 15px #ffd49c;
+	color: black !important;
+}
+.mavColour5 {
+	background-color: #ffc69c !important;
+	-moz-box-shadow:0px 0px 15px #ffc69c;
+	box-shadow:0px 0px 15px #ffc69c;
+	color: black !important;
+}
+.mavColour6 {
+	background-color: #ffba9c !important;
+	-moz-box-shadow:0px 0px 15px #ffba9c;
+	box-shadow:0px 0px 15px #ffba9c;
+	color: black !important;
+}
+.mavColour7 {
+	background-color: #ffb19c !important;
+	-moz-box-shadow:0px 0px 15px #ffb19c;
+	box-shadow:0px 0px 15px #ffb19c;
+	color: black !important;
+}
+.mavColour8 {
+	background-color: #ff9c9c !important;
+	-moz-box-shadow:0px 0px 15px #ff9c9c;
+	box-shadow:0px 0px 15px #ff9c9c;
+	color: black !important;
+}
+.mavColour9 {
+	background-color: #ff8484 !important;
+	-moz-box-shadow:0px 0px 15px #ff8484;
+	box-shadow:0px 0px 15px #ff8484;
+	color: black !important;
+}
+.mavColour10 {
+	background-color: #ff6e6e !important;
+	-moz-box-shadow:0px 0px 15px #ff6e6e;
+	box-shadow:0px 0px 15px #ff6e6e;
+	color: black !important;
+}

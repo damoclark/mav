@@ -1,5 +1,5 @@
 {* Smarty *}
-{extends file="cquni-corp-2012.tpl"}
+{extends file="cquni-corp-2014.tpl"}
 
 
 {block name=headerCSS append}
@@ -8,11 +8,12 @@
 	p.screenshots img {
 		padding: 5px;
 		border: 1px solid #cccccc;
-		margin: 0px 15px 15px 25px;	
+		margin: 15px 15px 15px 15px;	
 	}
 	div.ui-state-error { padding-left: 15px; }
 	div.ui-state-error img { margin: 0px; }
 	div.ui-state-error h2 { margin-top: 7px; padding-top: 0px; }
+	
 	
 </style>	
 {/block}
@@ -32,15 +33,15 @@
 
 {block  name=bodyContent}
 
-<p>Moodle Activity Viewer is a browser plugin for Firefox that allows you visualise student activity within your Moodle course site using heat maps.</p>
+<h2 class="feature">Moodle Activity Viewer is a browser plugin for Firefox that allows you visualise student activity within your Moodle course site using heat maps.</h2>
 
 {if $browser.browser == "Firefox"}
 
 	{if $browser.majorver >= 15}
 
-		<p>To install Moodle Activity Viewer, please follow the instructions below.</p>
+		<h3>Moodle Activity Viewer install instructions:</h3>
     
-    	<ol>
+    	<ol class="spaced">
 			<li>Please install the <a target="_blank" href="https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/" title="Greasemonkey Firefox Plugin">Greasemonkey Firefox Plugin</a>.  Once you have installed Greasemonkey, you may need to restart your browser.</li>
 			<li>Next, you need to install the <a href="gm/moodleActivityViewer.user.js" title="Moodle Activity Viewer Plugin">Moodle Activity Viewer Plugin</a>. </li>
 			<li>Now all you need do is navigate to your <a href="http://moodle.cqu.edu.au">Moodle</a> course site, and click the <i>Turn Activity View On</i> link (see below) in the Course Administration Block.</li>

@@ -11,7 +11,7 @@
  * 
  * @return string    The resultant SQL query
  */
-function generateSQLQuery($template,$queryData)
+function generateSQLQuery($template,$queryData=null)
 {
 	//Use output buffering to capture the output of the php query template script
 	ob_start() ;

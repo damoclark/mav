@@ -2,7 +2,7 @@
 // @name          Moodle Activity Viewer
 // @namespace	    http://damosworld.wordpress.com
 // @description	  Re-render Moodle pages to show student usage
-// @version       0.6.3
+// @version       0.7.0
 // @grant         GM_getValue
 // @grant         GM_setValue
 // @grant         GM_getResourceText
@@ -547,8 +547,9 @@ MAVsettings.prototype.saveGroups = function()
 	) ;
 	if(debug) console.log('selected groupids='+selectedGroups) ;
 
+	//If no groups are selected, then force to all students which is groupid 0
 	if(selectedGroups.length == 0)
-		throw "No Student Groups Selected" ;
+		selectedGroups.push(0) ;
 
 	//Store them back into instance
 	this.JSON.groups = selectedGroups ;
@@ -674,7 +675,6 @@ MAVsettings.prototype.getJSON = function()
  * Method for using ajax to retrieve all groups for this course and then it call
  * loadGroups method to update the dialog with the selected groups
  *
- * @todo This needs to be refactored into the balmi class
  */
 MAVsettings.prototype.getCourseGroups = function()
 {
@@ -889,6 +889,141 @@ function requestData(courseLink,pageLink,links)
 
 }
 
+/**
+ * Request from mav server which student did and didnt access given link
+ * 
+ * @param   {Element} The a tag of the link we are looking up
+ * 
+ */
+function getStudentAccess(link,linkText)
+{
+	//Pass the link we want to look up to getMoodleLinks which
+	//will return an array structure with a single element containing the
+	//data structure required by the server counterpart
+	var linkRequest = balmi.getMoodleLinks([link]) ;
+
+	//Get the document path part of the link
+	var linkName = link.href.replace(/^(?:https?:\/\/)?moodle\.cqu\.edu\.au\//,'\/') ;
+
+	var courseLink = balmi.getCoursePageLink() ;
+	//If no course link found in breadcrumbs, then not on a course page
+	if (courseLink == null)
+		exit ;
+	
+	//Get the page they are viewing
+	pageLink = window.location ;
+	
+	var settings = MAVcourseSettings.getJSON() ;
+	var data = JSON.stringify
+	(
+		{
+			'mavVersion': mavVersion,
+			'settings': settings,
+			'courselink': courseLink.href,
+			'pagelink': pageLink.href,
+			'links': linkRequest
+		}
+	) ;
+	
+  var xhr = $.ajax
+  (
+    {
+      url: balmiServerHome+'/getStudentAccess.php',
+      xhr: function(){return new GM_XHR();}, //Use GM_xmlhttpRequest
+      type: 'POST',
+      data: { "json": data },
+      dataType: 'json', 
+      success: function(data)
+      {  
+			var courseCode = balmi.getCourseCode();
+			
+			//--------- put together a default html string:
+			var tableHeader = "<table class='studentAccess'><thead><tr><th>Student Number</th><th>Firstname</th><th>Lastname</th></tr></thead><tbody>";
+			var tableContent = "";
+			var tableFooter = "</tbody></table>";					
+			var EASIlink = "<ul><li><a class='button' href='https://indicators.cqu.edu.au/easi/easi-courseview.php?coursecode=" + courseCode + "&selectStudents=";								
+			
+			// create some arrays to push the username's into
+			var accessStudents = new Array();
+			var noaccessStudents = new Array();
+						
+			if 	( data.data[linkName]['access'].length > 0 ) {				
+				$.each(data.data[linkName]['access'], function (index, value) {
+					// could alternatively loop over each index to add more flexibility likewise
+					tableContent += "<tr><td>" + value.username + "</td><td>" + value.firstname + "</td><td>" + value.lastname + "</td></tr>";	
+					accessStudents.push(value.username);
+				})
+				EASIlink += accessStudents.join();
+				EASIlink += "' target='_blank'>Nudge with EASICONNECT</a></li></ul></p>";
+				
+				// write the accessed students content to the container
+				$("#studentActivityList").html("<p>These students <strong>HAVE</strong> accessed this resource/activity</p>" + EASIlink + tableHeader + tableContent + tableFooter) ;
+			}
+			else {
+				$("#studentActivityList").html("<p>No students have accessed this link</p>") ;
+			}
+			
+			
+			//--------- doing the no access list now:
+	
+			if 	( data.data[linkName]['noaccess'].length > 0 ) {				
+	
+				tableContent = ""; EASIlink = ""; // clear for the next table	
+				EASIlink = "<ul><li><a class='button' href='https://indicators.cqu.edu.au/easi/easi-courseview.php?coursecode=" + courseCode + "&selectStudents=";
+				
+				$.each(data.data[linkName]['noaccess'], function (index, value) {
+					tableContent += "<tr><td>" + value.username + "</td><td>" + value.firstname + "</td><td>" + value.lastname + "</td></tr>";
+					noaccessStudents.push(value.username);
+				})
+				
+				EASIlink += noaccessStudents.join();
+				EASIlink += "' target='_blank'>Nudge with EASICONNECT</a></li></ul>";
+				$("#studentNoActivityList").html("<p>These students <strong>HAVE NOT</strong> accessed this resource/activity</p>" + EASIlink + tableHeader + tableContent + tableFooter) ;
+			}
+			else {
+				$("#studentNoActivityList").html("<p>All students have accessed this link</p>") ;
+			}
+			
+			//--------- both containers now have content, build the accordion:
+			$("#MAVstudentActivityTab").accordion({
+				collapsible: true,
+				header: "h2",
+				heightStyle: "content",
+				active: false
+			}) ;
+								
+			//--------- now open the dialog to display:  
+			$("#MAVstudentActivityDialog").dialog(
+			{
+				width: 570,
+				height: 570,
+				title: "Student Access ("+linkText+")",
+				modal: true,
+				closeOnEscape: true,
+				buttons: {
+					"Ok": function() {
+						// STOP your greesemonkey update here
+						$(this).dialog("close");
+					}
+				}
+			
+			});
+      },
+      error: function(xhr,status,message)
+      {
+        if(debug) console.log('status='+status) ;
+        if(debug) console.log('message='+message) ;
+      },
+			complete: function(xhr,status)
+			{
+				if (debug)
+					console.log('status='+status) ;
+			}
+    }
+  ) ;
+	
+}
+
 function updatePage(data)
 {
 	//do stuff with JSON
@@ -953,20 +1088,29 @@ function updatePage(data)
 	
 	allLinks = document.getElementsByTagName("a") ;
 	
-	for (var i=0; i < allLinks.length; i++)
+	//Iterate over all the links in the page and update them accordingly
+	$(allLinks).each(function(i,link)
 	{
-		var linkName = allLinks[i].href.replace(/^(?:https?:\/\/)?moodle\.cqu\.edu\.au\//,'\/') ;
+		var linkName = link.href.replace(/^(?:https?:\/\/)?moodle\.cqu\.edu\.au\//,'\/') ;
+		var linkText = $(link).text() ;
 		if (data['data'].hasOwnProperty(linkName))
 		{
 			//Add the count to the link text (using clicks or students)
-			var counter = ' (' + data['data'][linkName] + activityText + ')' ;
-			allLinks[i].innerHTML += counter ;
+			$(link).after('<a id="studentActivityLink_'+i+'" class="makealink"> (' + data['data'][linkName] + activityText + ')</a> ') ;
+			
+			//Add event handler for clicking on the student activity link to open dialog showing which students
+			$("#studentActivityLink_"+i).bind('click',function(){getStudentAccess(link,linkText);}) ;
+
 			//Add the count to the title text (using clicks or students)
 			var counter = ' (' + data['data'][linkName] + activityText + ')' ;
-			allLinks[i].title += counter ;
+			link.title += counter ;
+
 			//Highlighting links that have changed not working below
-			//allLinks[i].style.textDecoration = 'none' ;
-			allLinks[i].style.borderBottom = '1px double' ; //Double underline
+			//link.style.textDecoration = 'none' ;
+			link.style.borderBottom = '1px double' ; //Double underline
+			//Add double underline to the student activity list link too eg. (15 clicks)
+			$("#studentActivityLink_"+i).css('borderBottom','1px double') ;
+			
 			////////////////////////////////////////////////////////////////////
 			
 			if (displayMode == "T") {
@@ -989,7 +1133,7 @@ function updatePage(data)
 	
 				if (fontSize > 0)
 				{
-					allLinks[i].style.fontSize = fontSize+"px";
+					link.style.fontSize = fontSize+"px";
 				}
 			}
 			
@@ -1001,12 +1145,16 @@ function updatePage(data)
 					percentile = data['data'][linkName] / data.studentCount;
 					percentile = Math.round(percentile);
 					if (percentile>10) percentile=10;
-					$(allLinks[i]).addClass("mavColour"+percentile);
+					$(link).addClass("mavColour"+percentile);
+					//Add colour style to the student activity list link too
+					$("#studentActivityLink_"+i).addClass("mavColour"+percentile) ;
 				}
 				else if (activityType == "S") {
 					percentile = data['data'][linkName] / data.studentCount * 10;
 					percentile = Math.round(percentile);
-					$(allLinks[i]).addClass("mavColour"+percentile);
+					$(link).addClass("mavColour"+percentile);
+					//Add colour style to the student activity list link too
+					$("#studentActivityLink_"+i).addClass("mavColour"+percentile) ;
 				}
 				
 				
@@ -1014,7 +1162,8 @@ function updatePage(data)
 			
 			
 		}
-	}
+	}) ;
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1314,48 +1463,6 @@ $("#MAVdisplayColour").bind("click", function() {
 	$("#MAVdisplayColourLegend").fadeIn();
 });
 
-
-
-
-
-
-
-//Get last update check date/time
-//console.log('Checking for updates') ;
-//var lastUpdateString = GM_getValue('lastcheckupdate') ;
-//console.log('lastupdatestring='+lastUpdateString) ;
-//if (lastUpdateString === undefined)
-//{
-//	console.log('setting lastupdate GM value to '+new Date().toISOString()) ;
-//	GM_setValue('lastupdate',new Date().toISOString()) ;
-//}
-//else
-//{
-//	console.log('checking against last update time is more than 1hr') ;
-//	//Get current date/time
-//	var currentDate = new Date() ;
-//
-//	var lastUpdateDate = new Date(lastUpdateString) ;
-//	
-//	//If last update longer than 1hr, update
-//	if (currentDate.getTime() - lastUpdateDate.getTime() > 3600000) //Greater than 1hr
-//	{
-//		//update
-//		console.log('We need to check for update') ;
-//		
-//		//ajax in latest script version
-//		
-//		//check version is newer or not
-//		
-//		console.log('Updating now') ;
-//		if (confirm('Press okay (and then click Install) to update to latest Moodle Activity Viewer or cancel to delay for an hour.'))
-//		{
-//			//TODO
-//			//http://stackoverflow.com/questions/12613421/how-to-get-a-greasemonkey-scripts-original-installation-url
-//			window.location.href = 'https://oltdev.cqu.edu.au/mav/gm/moodleActivityViewer.user.js' ;
-//		}
-//	}
-//}
 
 ///////////////////////////////////////////////////////////////////////////////
 //END OF PROGRAM
