@@ -148,7 +148,15 @@ $stmt = $dbh->prepare($query) ;
 foreach($input['links'] as $link => $data)
 {
 	$module = $data[0] ;
-	$url = $data[1] ;
+	
+	//If the module is glossary, then check if its the link to a particular
+	//glossary (eg view.php), and if so, add &tab=-1 on end as this is what
+	//appears in the logs, even though its not in the links on the page
+	if($module == 'glossary' and preg_match('/^view\.php\?id=\d+$/',$data[1]))
+		$url = $data[1].'&tab=-1' ;
+	else //Otherwise, don't change at all
+		$url = $data[1] ;
+
 	//@todo Check return value from execute to see if query failed
 	$stmt->execute(array(':module'=>$module,':url'=>$url,':course'=>$courseid)) ;
 	
